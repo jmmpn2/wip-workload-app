@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const recipients = ((data.shop as any).reportRecipients || process.env.DEFAULT_REPORT_RECIPIENTS || "")
+    const shop = data.shop as any;
+
+    const recipients = ((shop.reportRecipients as string | undefined) || process.env.DEFAULT_REPORT_RECIPIENTS || "")
       .split(",")
       .map((value: string) => value.trim())
       .filter(Boolean);
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = resolveBaseUrl(request);
     const html = buildDashboardEmailHtml({
-      shopName: data.shop.name,
+      shopName: shop.name,
       baseUrl,
       totals: data.totals,
       unassigned: data.unassigned,
@@ -55,13 +57,13 @@ export async function POST(request: NextRequest) {
       assignableRows: data.assignableRows,
     });
 
-    const subjectPrefix = (data.shop as any).reportSubjectPrefix?.trim();
+    const subjectPrefix = shop.reportSubjectPrefix?.trim();
     const subject = subjectPrefix
-      ? `${subjectPrefix} - ${data.shop.name} WIP Workload Report`
-      : `${data.shop.name} WIP Workload Report`;
+      ? `${subjectPrefix} - ${shop.name} WIP Workload Report`
+      : `${shop.name} WIP Workload Report`;
 
     const textLines = [
-      `${data.shop.name} WIP Workload Report`,
+      `${shop.name} WIP Workload Report`,
       "",
       `Total Jobs WIP: ${data.totals.totalJobs}`,
       `Total Hours WIP: ${data.totals.totalHoursWip}`,
@@ -78,11 +80,11 @@ export async function POST(request: NextRequest) {
       text: textLines.join("\n"),
       html,
       mailSettings: {
-        host: data.shop.smtpHost || undefined,
-        port: data.shop.smtpPort || undefined,
-        secure: data.shop.smtpSecure,
-        user: data.shop.smtpUser || undefined,
-        from: data.shop.smtpFrom || undefined,
+        host: shop.smtpHost || undefined,
+        port: shop.smtpPort || undefined,
+        secure: shop.smtpSecure,
+        user: shop.smtpUser || undefined,
+        from: shop.smtpFrom || undefined,
       },
     });
 
