@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       fixedHours: number | null;
       stageGroup: string | null;
     }) =>
-      prisma.phaseRule.update({
+      prisma.phase.update({
         where: { id: phase.id },
         data: {
           phaseName: phase.phaseName.trim(),
