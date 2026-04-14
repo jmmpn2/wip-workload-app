@@ -1,11 +1,3 @@
 import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  serverExternalPackages: ["xlsx", "nodemailer"],
-
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-};
-
+const nextConfig: NextConfig = { serverExternalPackages: ["xlsx", "nodemailer"] };
 export default nextConfig;
