@@ -29,7 +29,7 @@ export default async function SettingsPage() {
       />
       <ReportRecipientsSettingsForm reportRecipients={shop.reportRecipients || ""} />
       <EmailSettingsForm
-        smtpProvider={shop.smtpProvider || "gmail"}
+        smtpProvider={shop.smtpProvider || "gmail_api"}
         smtpHost={shop.smtpHost || "smtp.gmail.com"}
         smtpPort={shop.smtpPort}
         smtpSecure={shop.smtpSecure}
@@ -37,6 +37,7 @@ export default async function SettingsPage() {
         smtpFrom={shop.smtpFrom || ""}
         reportSubjectPrefix={shop.reportSubjectPrefix || ""}
         smtpPasswordConfigured={Boolean(process.env.SMTP_PASS)}
+        gmailApiConfigured={Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_REFRESH_TOKEN)}
       />
       <CapacitySettingsForm technicians={technicians} />
       <StageSettingsForm stages={stages} />

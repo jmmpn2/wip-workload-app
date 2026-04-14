@@ -88,3 +88,8 @@ For Microsoft 365 later, switch the provider to Microsoft 365 and use:
 - SMTP Host: smtp.office365.com
 - SMTP Port: 587
 - Secure SSL: off
+
+
+## Railway Gmail setup
+
+For Railway, use the Gmail API instead of Gmail SMTP. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REFRESH_TOKEN` in Railway Variables, then choose `Gmail API` in the app settings.

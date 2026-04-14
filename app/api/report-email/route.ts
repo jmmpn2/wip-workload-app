@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
     console.log("[report-email] starting", {
       shopId,
       recipientCount: recipients.length,
+      provider: shop.smtpProvider || process.env.EMAIL_PROVIDER || "gmail_api",
       host: shop.smtpHost || process.env.SMTP_HOST || null,
       port: shop.smtpPort || process.env.SMTP_PORT || null,
       user: shop.smtpUser || process.env.SMTP_USER || null,
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
         text: textLines.join("\n"),
         html,
         mailSettings: {
+          provider: shop.smtpProvider || undefined,
           host: shop.smtpHost || undefined,
           port: shop.smtpPort || undefined,
           secure: shop.smtpSecure,
