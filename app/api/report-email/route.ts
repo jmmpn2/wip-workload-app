@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const recipients = (data.shop.reportRecipients || process.env.DEFAULT_REPORT_RECIPIENTS || "")
+    const recipients = ((data.shop as any).reportRecipients || process.env.DEFAULT_REPORT_RECIPIENTS || "")
       .split(",")
       .map((value) => value.trim())
       .filter(Boolean);
