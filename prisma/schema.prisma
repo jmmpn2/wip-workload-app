@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Shop {
+  id                    String         @id @default(cuid())
+  name                  String         @unique
+  isActive              Boolean        @default(true)
+  reportRecipients      String?
+  smtpProvider          String?        @default("gmail")
+  smtpHost              String?
+  smtpPort              Int?
+  smtpSecure            Boolean        @default(false)
+  smtpUser              String?
+  smtpFrom              String?
+  reportSubjectPrefix   String?
+  needsWorkThreshold    Int            @default(125)
+  overloadedThreshold   Int            @default(250)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  technicians           Technician[]
+  currentRows           CurrentWipRow[]
+  importRuns            ImportRun[]
+  jobHolds              JobHold[]
+  handoutHolds          HandoutHold[]
+}
+
+model Technician {
+  id        String   @id @default(cuid())
+  shopId    String
+  name      String
+  capacity  Float    @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, name])
+}
+
+model StageRule {
+  id            String   @id @default(cuid())
+  stageName     String   @unique
+  logicType     String   @default("PERCENT")
+  remainingPct  Float    @default(0)
+  fixedHours    Float?
+  includeInLoad Boolean  @default(true)
+  sortOrder     Int      @default(999)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CurrentWipRow {
+  id                String   @id @default(cuid())
+  shopId            String
+  roNumber          String
+  owner             String
+  vehicle           String
+  estimator         String   @default("")
+  technician        String
+  stage             String
+  roHours           Float
+  remainingHours    Float    @default(0)
+  isHeld            Boolean  @default(false)
+  holdReason        String   @default("")
+  isHandoutHeld     Boolean  @default(false)
+  handoutHoldReason String   @default("")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, technician])
+  @@index([shopId, roNumber])
+}
+
+model JobHold {
+  id         String   @id @default(cuid())
+  shopId      String
+  roNumber    String
+  isHeld      Boolean  @default(true)
+  reason      String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, roNumber])
+}
+
+model HandoutHold {
+  id         String   @id @default(cuid())
+  shopId      String
+  roNumber    String
+  isHeld      Boolean  @default(true)
+  reason      String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, roNumber])
+}
+
+model ImportRun {
+  id             String   @id @default(cuid())
+  shopId         String
+  sourceFileName String
+  rowCount       Int
+  createdAt      DateTime @default(now())
+  shop           Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,49 @@
+{
+  "Creve Coeur": {
+    "Check In": {
+      "remaining_pct": 1.0,
+      "sort_order": 10,
+      "counts_in_load": true
+    },
+    "Disassembly": {
+      "remaining_pct": 1.0,
+      "sort_order": 20,
+      "counts_in_load": true
+    },
+    "A+": {
+      "remaining_pct": 1.0,
+      "sort_order": 30,
+      "counts_in_load": true
+    },
+    "Body": {
+      "remaining_pct": 1.0,
+      "sort_order": 40,
+      "counts_in_load": true
+    },
+    "Paint": {
+      "remaining_pct": 0.5,
+      "sort_order": 50,
+      "counts_in_load": true
+    },
+    "Reassembly": {
+      "remaining_pct": 0.25,
+      "sort_order": 60,
+      "counts_in_load": true
+    },
+    "Detail": {
+      "remaining_pct": 0.0,
+      "sort_order": 70,
+      "counts_in_load": false
+    },
+    "Waiting on Parts": {
+      "remaining_pct": 0.0,
+      "sort_order": 80,
+      "counts_in_load": false
+    },
+    "Waiting on Authorization": {
+      "remaining_pct": 0.0,
+      "sort_order": 90,
+      "counts_in_load": false
+    }
+  }
+}

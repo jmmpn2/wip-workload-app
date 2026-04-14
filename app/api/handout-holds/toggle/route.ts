@@ -1,0 +1,55 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireShopId } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { UNASSIGNED_TECH_NAME } from "@/lib/stages";
+
+export async function POST(request: NextRequest) {
+  const shopId = await requireShopId();
+  const body = await request.json();
+  const roNumber = String(body.roNumber || "").trim();
+  const reason = String(body.reason || "").trim();
+
+  if (!roNumber) {
+    return NextResponse.json({ error: "RO number is required." }, { status: 400 });
+  }
+
+  const currentRow = await prisma.currentWipRow.findFirst({ where: { shopId, roNumber } });
+  if (!currentRow) {
+    return NextResponse.json({ error: "Job not found in current WIP." }, { status: 404 });
+  }
+
+  if (currentRow.technician !== UNASSIGNED_TECH_NAME) {
+    return NextResponse.json({ error: "Only unassigned jobs can be marked not ready to hand out." }, { status: 400 });
+  }
+
+  const existing = await prisma.handoutHold.findUnique({
+    where: { shopId_roNumber: { shopId, roNumber } },
+  });
+
+  if (existing?.isHeld) {
+    await prisma.handoutHold.update({
+      where: { shopId_roNumber: { shopId, roNumber } },
+      data: { isHeld: false, reason: "" },
+    });
+
+    await prisma.currentWipRow.updateMany({
+      where: { shopId, roNumber },
+      data: { isHandoutHeld: false, handoutHoldReason: "" },
+    });
+
+    return NextResponse.json({ ok: true, isHeld: false });
+  }
+
+  await prisma.handoutHold.upsert({
+    where: { shopId_roNumber: { shopId, roNumber } },
+    update: { isHeld: true, reason },
+    create: { shopId, roNumber, isHeld: true, reason },
+  });
+
+  await prisma.currentWipRow.updateMany({
+    where: { shopId, roNumber, technician: UNASSIGNED_TECH_NAME },
+    data: { isHandoutHeld: true, handoutHoldReason: reason },
+  });
+
+  return NextResponse.json({ ok: true, isHeld: true });
+}

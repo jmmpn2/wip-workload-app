@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { background:#f8fafc; color:#0f172a; }
+
+@media print {
+  @page { size: landscape; margin: 0.45in; }
+  .print-hidden { display:none !important; }
+  html, body { background:#fff; }
+  .tech-report-page { page-break-inside: avoid; break-inside: avoid; }
+}
