@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     const recipients = ((data.shop as any).reportRecipients || process.env.DEFAULT_REPORT_RECIPIENTS || "")
       .split(",")
-      .map((value) => value.trim())
+      .map((value: string) => value.trim())
       .filter(Boolean);
 
     if (!recipients.length) {
