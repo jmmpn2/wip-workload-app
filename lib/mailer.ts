@@ -11,8 +11,7 @@ export type MailSettings = {
 };
 
 function escapeHeader(value: string) {
-  return value.replace(/[
-]+/g, " ").trim();
+  return value.replace(/[\r\n]+/g, " ").trim();
 }
 
 function toBase64Url(input: string) {
@@ -57,8 +56,7 @@ function buildMimeMessage(params: {
       "",
       `--${boundary}--`,
       "",
-    ].join("
-");
+    ].join("\r\n");
   }
 
   return [
@@ -68,8 +66,7 @@ function buildMimeMessage(params: {
     "",
     params.text,
     "",
-  ].join("
-");
+  ].join("\r\n");
 }
 
 function resolveMailSettings(input?: Partial<MailSettings>) {
