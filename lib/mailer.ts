@@ -46,17 +46,24 @@ export async function sendReportEmail(params: {
     host: settings.host,
     port: Number(settings.port),
     secure: settings.secure || Number(settings.port) === 465,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
     auth: {
       user: settings.user,
       pass: settings.pass,
     },
   });
 
-  await transporter.sendMail({
-    from: settings.from,
-    to: params.to.join(", "),
-    subject: params.subject,
-    text: params.text,
-    html: params.html,
-  });
+  try {
+    return await transporter.sendMail({
+      from: settings.from,
+      to: params.to.join(", "),
+      subject: params.subject,
+      text: params.text,
+      html: params.html,
+    });
+  } finally {
+    transporter.close();
+  }
 }

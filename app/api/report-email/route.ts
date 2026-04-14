@@ -20,6 +20,22 @@ function resolveBaseUrl(request: NextRequest) {
   return "http://localhost:3000";
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const shopId = await requireShopId();
@@ -74,23 +90,37 @@ export async function POST(request: NextRequest) {
       `Dashboard Link Base: ${baseUrl}`,
     ];
 
-    await sendReportEmail({
-      to: recipients,
-      subject,
-      text: textLines.join("\n"),
-      html,
-      mailSettings: {
-        host: shop.smtpHost || undefined,
-        port: shop.smtpPort || undefined,
-        secure: shop.smtpSecure,
-        user: shop.smtpUser || undefined,
-        from: shop.smtpFrom || undefined,
-      },
+    console.log("[report-email] starting", {
+      shopId,
+      recipientCount: recipients.length,
+      host: shop.smtpHost || process.env.SMTP_HOST || null,
+      port: shop.smtpPort || process.env.SMTP_PORT || null,
+      user: shop.smtpUser || process.env.SMTP_USER || null,
     });
 
+    await withTimeout(
+      sendReportEmail({
+        to: recipients,
+        subject,
+        text: textLines.join("\n"),
+        html,
+        mailSettings: {
+          host: shop.smtpHost || undefined,
+          port: shop.smtpPort || undefined,
+          secure: shop.smtpSecure,
+          user: shop.smtpUser || undefined,
+          from: shop.smtpFrom || undefined,
+        },
+      }),
+      25000,
+      "Email send timed out after 25 seconds."
+    );
+
+    console.log("[report-email] sent", { shopId, recipientCount: recipients.length });
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Email report failed.";
+    console.error("[report-email] failed", error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
