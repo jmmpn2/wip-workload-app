@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       assignableRows: data.assignableRows,
     });
 
-    const subjectPrefix = data.shop.reportSubjectPrefix?.trim();
+    const subjectPrefix = (data.shop as any).reportSubjectPrefix?.trim();
     const subject = subjectPrefix
       ? `${subjectPrefix} - ${data.shop.name} WIP Workload Report`
       : `${data.shop.name} WIP Workload Report`;
