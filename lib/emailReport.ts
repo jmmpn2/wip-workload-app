@@ -105,7 +105,7 @@ function buildStageChartHtml(stages: Array<{ stage: string; count: number; color
     </table>`;
 }
 
-export function buildDashboardEmailHtml(params: {
+export function buildDashboardEmailBodyHtml(params: {
   shopName: string;
   baseUrl: string;
   totals: { totalJobs: number; totalHoursWip: number; totalRemainingHours: number };
@@ -238,9 +238,6 @@ export function buildDashboardEmailHtml(params: {
       : "";
 
   return `
-  <!doctype html>
-  <html>
-    <body style="margin:0; padding:24px; background:#f8fafc; font-family:Arial, Helvetica, sans-serif; color:#0f172a;">
       <div style="max-width:1120px; margin:0 auto;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse; margin-bottom:20px;">
           <tr>${cardsHtml}</tr>
@@ -310,7 +307,14 @@ export function buildDashboardEmailHtml(params: {
           </table>
           ${moreTowInNote}
         </div>
-      </div>
-    </body>
+      </div>`;
+}
+
+export function buildDashboardEmailHtml(params: Parameters<typeof buildDashboardEmailBodyHtml>[0]) {
+  const bodyHtml = buildDashboardEmailBodyHtml(params);
+  return `
+  <!doctype html>
+  <html>
+    <body style="margin:0; padding:24px; background:#f8fafc; font-family:Arial, Helvetica, sans-serif; color:#0f172a;">${bodyHtml}</body>
   </html>`;
 }

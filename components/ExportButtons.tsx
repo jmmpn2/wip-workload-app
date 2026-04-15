@@ -31,8 +31,20 @@ export function ExportButtons() {
     window.open("/print/tech-reports", "_blank", "noopener,noreferrer");
   }
 
+  function printEmailReport() {
+    window.open("/print/email-report", "_blank", "noopener,noreferrer");
+  }
+
   return (
     <div className="print-hidden flex flex-wrap items-center justify-end gap-3">
+      <button
+        type="button"
+        onClick={printEmailReport}
+        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+      >
+        Print Email Report
+      </button>
+
       <button
         type="button"
         onClick={printAllTechReports}
