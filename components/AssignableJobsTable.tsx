@@ -1,15 +1,16 @@
 import { HandoutHoldToggleButton } from "@/components/HandoutHoldToggleButton";
+import { TowInEstimateToggleButton } from "@/components/TowInEstimateToggleButton";
 
 function HandoutTable({
   title,
   description,
   rows,
-  held,
+  variant,
 }: {
   title: string;
   description: string;
   rows: any[];
-  held: boolean;
+  variant: "assignable" | "tow_in" | "hold";
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -32,7 +33,7 @@ function HandoutTable({
           </thead>
           <tbody>
             {rows.length ? rows.map((row) => (
-              <tr key={row.id} className={`border-b border-slate-100 ${held ? "bg-amber-50" : ""}`}>
+              <tr key={row.id} className={`border-b border-slate-100 ${variant === "hold" ? "bg-amber-50" : variant === "tow_in" ? "bg-blue-50" : ""}`}>
                 <td className="px-3 py-2">{row.roNumber}</td>
                 <td className="px-3 py-2">{row.owner}</td>
                 <td className="px-3 py-2">{row.vehicle}</td>
@@ -41,17 +42,28 @@ function HandoutTable({
                 <td className="px-3 py-2">{Math.round(row.roHours)}</td>
                 <td className="px-3 py-2">{Math.round(row.remainingHours)}</td>
                 <td className="px-3 py-2">
-                  {held ? (
+                  {variant === "hold" ? (
                     <div className="text-amber-800">
                       <div className="font-semibold">ON HOLD</div>
                       {row.handoutHoldReason ? <div className="text-xs">{row.handoutHoldReason}</div> : null}
                     </div>
+                  ) : variant === "tow_in" ? (
+                    <div className="font-semibold text-blue-800">Tow in - Needs Estimate</div>
                   ) : (
                     <span className="text-slate-400">Ready to handout</span>
                   )}
                 </td>
                 <td className="px-3 py-2 print-hidden">
-                  <HandoutHoldToggleButton roNumber={row.roNumber} isHeld={held} holdReason={row.handoutHoldReason || ""} />
+                  {variant === "hold" ? (
+                    <HandoutHoldToggleButton roNumber={row.roNumber} isHeld holdReason={row.handoutHoldReason || ""} />
+                  ) : variant === "tow_in" ? (
+                    <TowInEstimateToggleButton roNumber={row.roNumber} isTowInEstimate />
+                  ) : (
+                    <div className="flex gap-2">
+                      <TowInEstimateToggleButton roNumber={row.roNumber} isTowInEstimate={false} />
+                      <HandoutHoldToggleButton roNumber={row.roNumber} isHeld={false} holdReason={row.handoutHoldReason || ""} />
+                    </div>
+                  )}
                 </td>
               </tr>
             )) : (
@@ -66,20 +78,26 @@ function HandoutTable({
   );
 }
 
-export function AssignableJobsTable({ rows, holdRows }: { rows: any[]; holdRows: any[] }) {
+export function AssignableJobsTable({ rows, towInRows, holdRows }: { rows: any[]; towInRows: any[]; holdRows: any[] }) {
   return (
     <div className="space-y-6">
       <HandoutTable
         title="Cars To Handout"
         description="These jobs have no technician assigned and are available to hand out."
         rows={rows}
-        held={false}
+        variant="assignable"
+      />
+      <HandoutTable
+        title="Tow Ins Needing Estimate"
+        description="These unassigned tow-ins have been tagged as needing an estimate before they are ready to hand out."
+        rows={towInRows}
+        variant="tow_in"
       />
       <HandoutTable
         title="Cars On Hold"
         description="These jobs are not ready to hand out yet. Release them here to move them back to Cars To Handout."
         rows={holdRows}
-        held
+        variant="hold"
       />
     </div>
   );

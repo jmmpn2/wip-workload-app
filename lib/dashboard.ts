@@ -22,6 +22,7 @@ export async function getDashboardData(shopId: string) {
       stages: [],
       unassigned: { totalJobs: 0, totalHours: 0, remainingHours: 0 },
       assignableRows: [],
+      towInEstimateRows: [],
       handoutHoldRows: [],
     };
   }
@@ -58,7 +59,8 @@ export async function getDashboardData(shopId: string) {
   const totalRemainingHours = roundHours(rows.reduce((sum, row) => sum + row.remainingHours, 0));
 
   const unassignedRows = rows.filter((row) => row.technician === UNASSIGNED_TECH_NAME);
-  const activeAssignableRows = unassignedRows.filter((row) => !row.isHandoutHeld);
+  const activeAssignableRows = unassignedRows.filter((row) => !row.isHandoutHeld && !row.isTowInEstimate);
+  const towInEstimateRows = unassignedRows.filter((row) => row.isTowInEstimate && !row.isHandoutHeld);
   const handoutHoldRows = unassignedRows.filter((row) => row.isHandoutHeld);
 
   const unassigned = {
@@ -102,6 +104,7 @@ export async function getDashboardData(shopId: string) {
     stages,
     unassigned,
     assignableRows: sortRows(activeAssignableRows),
+    towInEstimateRows: sortRows(towInEstimateRows),
     handoutHoldRows: sortRows(handoutHoldRows),
   };
 }

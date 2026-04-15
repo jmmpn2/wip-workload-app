@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
       techRank: data.techRank,
       stages: data.stages,
       assignableRows: data.assignableRows,
+      towInEstimateRows: data.towInEstimateRows,
     });
 
     const subjectPrefix = shop.reportSubjectPrefix?.trim();

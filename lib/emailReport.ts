@@ -131,6 +131,16 @@ export function buildDashboardEmailHtml(params: {
     roHours: number;
     remainingHours: number;
   }>;
+  towInEstimateRows: Array<{
+    id?: string;
+    roNumber: string;
+    owner: string;
+    vehicle: string;
+    estimator?: string | null;
+    stage: string;
+    roHours: number;
+    remainingHours: number;
+  }>;
 }) {
   const baseUrl = params.baseUrl.replace(/\/$/, "");
   const cards = [
@@ -204,6 +214,29 @@ export function buildDashboardEmailHtml(params: {
       ? `<p style="margin:10px 0 0; color:#64748b; font-size:12px;">Showing the first ${assignableRows.length} unassigned jobs.</p>`
       : "";
 
+  const towInRows = params.towInEstimateRows.slice(0, 15);
+  const towInRowsHtml = towInRows.length
+    ? towInRows
+        .map(
+          (row) => `
+          <tr>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#0f172a;">${escapeHtml(row.roNumber)}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.owner)}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.vehicle)}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.estimator || "—")}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.stage)}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.roHours))}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.remainingHours))}</td>
+          </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="7" style="padding:16px 12px; color:#64748b; text-align:center;">No tow-ins need estimates right now.</td></tr>`;
+
+  const moreTowInNote =
+    params.towInEstimateRows.length > towInRows.length
+      ? `<p style="margin:10px 0 0; color:#64748b; font-size:12px;">Showing the first ${towInRows.length} tow-ins needing estimate.</p>`
+      : "";
+
   return `
   <!doctype html>
   <html>
@@ -238,7 +271,7 @@ export function buildDashboardEmailHtml(params: {
           </table>
         </div>
 
-        <div style="border:1px solid #e2e8f0; border-radius:18px; background:#ffffff; padding:20px;">
+        <div style="border:1px solid #e2e8f0; border-radius:18px; background:#ffffff; padding:20px; margin-bottom:20px;">
           <h2 style="margin:0 0 6px; font-size:20px; line-height:1.2;">Cars To Handout</h2>
           <p style="margin:0 0 16px; color:#64748b; font-size:13px;">These jobs are currently unassigned and available to hand out.</p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
@@ -256,6 +289,26 @@ export function buildDashboardEmailHtml(params: {
             <tbody>${assignableRowsHtml}</tbody>
           </table>
           ${moreAssignableNote}
+        </div>
+
+        <div style="border:1px solid #e2e8f0; border-radius:18px; background:#ffffff; padding:20px;">
+          <h2 style="margin:0 0 6px; font-size:20px; line-height:1.2;">Tow Ins Needing Estimate</h2>
+          <p style="margin:0 0 16px; color:#64748b; font-size:13px;">These unassigned tow-ins have been tagged as needing an estimate before they are ready to hand out.</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">RO #</th>
+                <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Owner</th>
+                <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Vehicle</th>
+                <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Estimator</th>
+                <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Stage</th>
+                <th align="right" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">RO Hours</th>
+                <th align="right" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Remaining</th>
+              </tr>
+            </thead>
+            <tbody>${towInRowsHtml}</tbody>
+          </table>
+          ${moreTowInNote}
         </div>
       </div>
     </body>

@@ -52,21 +52,24 @@ export function parseWorkbook(buffer: Buffer): ParsedRow[] {
 }
 
 export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedRow[], sourceFileName: string) {
-  const [rules, techs, holds, handoutHolds] = await Promise.all([
+  const [rules, techs, holds, handoutHolds, towInEstimateTags] = await Promise.all([
     prisma.stageRule.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.technician.findMany({ where: { shopId, isActive: true } }),
     prisma.jobHold.findMany({ where: { shopId, isHeld: true } }),
     prisma.handoutHold.findMany({ where: { shopId, isHeld: true } }),
+    prisma.towInEstimateTag.findMany({ where: { shopId, isTagged: true } }),
   ]);
   const ruleMap = new Map(rules.map((rule) => [rule.stageName, rule]));
   const holdMap = new Map(holds.map((hold) => [hold.roNumber, hold]));
   const handoutHoldMap = new Map(handoutHolds.map((hold) => [hold.roNumber, hold]));
+  const towInEstimateMap = new Map(towInEstimateTags.map((tag) => [tag.roNumber, tag]));
   const techNames = new Set(techs.map((tech) => normalizeTechnicianName(tech.name)));
 
   const prepared = rows.map((row) => {
     const rule = ruleMap.get(row.stage);
     const hold = holdMap.get(row.roNumber);
     const handoutHold = row.technician === UNASSIGNED_TECH_NAME ? handoutHoldMap.get(row.roNumber) : undefined;
+    const towInEstimateTag = row.technician === UNASSIGNED_TECH_NAME ? towInEstimateMap.get(row.roNumber) : undefined;
 
     let remainingHours = 0;
     if (rule && rule.includeInLoad && !hold) {
@@ -87,6 +90,7 @@ export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedR
       holdReason: hold?.reason || "",
       isHandoutHeld: !!handoutHold,
       handoutHoldReason: handoutHold?.reason || "",
+      isTowInEstimate: !!towInEstimateTag,
     };
   });
 
@@ -121,6 +125,17 @@ export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedR
       await tx.handoutHold.updateMany({
         where: { shopId, roNumber: { in: staleHandoutHolds } },
         data: { isHeld: false, reason: "" },
+      });
+    }
+
+    const staleTowInEstimateTags = towInEstimateTags
+      .filter((tag) => !incomingRoNumbers.has(tag.roNumber) || assignedRoNumbers.has(tag.roNumber))
+      .map((tag) => tag.roNumber);
+
+    if (staleTowInEstimateTags.length) {
+      await tx.towInEstimateTag.updateMany({
+        where: { shopId, roNumber: { in: staleTowInEstimateTags } },
+        data: { isTagged: false },
       });
     }
   });

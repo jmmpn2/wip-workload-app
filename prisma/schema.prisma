@@ -28,6 +28,7 @@ model Shop {
   importRuns            ImportRun[]
   jobHolds              JobHold[]
   handoutHolds          HandoutHold[]
+  towInEstimateTags     TowInEstimateTag[]
 }
 
 model Technician {
@@ -70,6 +71,7 @@ model CurrentWipRow {
   holdReason        String   @default("")
   isHandoutHeld     Boolean  @default(false)
   handoutHoldReason String   @default("")
+  isTowInEstimate   Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
@@ -97,6 +99,18 @@ model HandoutHold {
   roNumber    String
   isHeld      Boolean  @default(true)
   reason      String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, roNumber])
+}
+
+model TowInEstimateTag {
+  id         String   @id @default(cuid())
+  shopId      String
+  roNumber    String
+  isTagged    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
