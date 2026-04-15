@@ -1,114 +1,106 @@
 import { cleanText, normalizeStage, normalizeTechnicianName, UNASSIGNED_TECH_NAME } from "@/lib/stages";
+import type { ParsedRow } from "@/lib/workload";
 
-type ParsedRow = {
-  roNumber: string;
-  owner: string;
-  vehicle: string;
-  estimator: string;
-  technician: string;
-  stage: string;
-  roHours: number;
-};
+type TextItem = { str?: string; transform?: number[] };
 
-type PdfWord = {
-  text: string;
+type PositionedText = {
   x: number;
   y: number;
+  text: string;
 };
 
-type PdfLine = PdfWord[];
-
-type RawPdfRow = {
-  ro: string[];
-  customer: string[];
-  vehicle: string[];
-  tech: string[];
-  estimator: string[];
-  insurance: string[];
-  phase: string[];
-  hours: string[];
+type TextLine = {
+  y: number;
+  items: PositionedText[];
 };
 
-const COLUMN_RANGES = {
-  ro: [90, 125],
-  customer: [125, 255],
-  vehicle: [255, 349],
-  tech: [395, 438],
-  estimator: [438, 487],
-  insurance: [487, 576],
-  phase: [576, 657],
-  hours: [657, 681],
-} as const;
+const COL = {
+  roMin: 90,
+  roMax: 128,
+  customerMin: 124,
+  customerMax: 197,
+  vehicleMin: 214,
+  vehicleMax: 349,
+  techMin: 390,
+  techMax: 438,
+  estimatorMin: 438,
+  estimatorMax: 486,
+  phaseMin: 576,
+  phaseMax: 628,
+  hoursMin: 651,
+  hoursMax: 681,
+};
 
-function makeEmptyRawRow(): RawPdfRow {
-  return {
-    ro: [],
-    customer: [],
-    vehicle: [],
-    tech: [],
-    estimator: [],
-    insurance: [],
-    phase: [],
-    hours: [],
-  };
+const ROW_START_RE = /^390\d{4}$/;
+
+function sortAndJoin(items: PositionedText[]) {
+  return items
+    .slice()
+    .sort((a, b) => a.x - b.x)
+    .map((item) => item.text)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function classifyColumn(x: number): keyof RawPdfRow | null {
-  for (const [name, range] of Object.entries(COLUMN_RANGES) as Array<[keyof typeof COLUMN_RANGES, readonly number[]]>) {
-    if (x >= range[0] && x < range[1]) return name;
+function isInRange(x: number, min: number, max: number) {
+  return x >= min && x < max;
+}
+
+function groupLines(items: PositionedText[]) {
+  const sorted = items
+    .filter((item) => item.text)
+    .sort((a, b) => (b.y - a.y) || (a.x - b.x));
+
+  const lines: TextLine[] = [];
+  for (const item of sorted) {
+    const existing = lines.find((line) => Math.abs(line.y - item.y) <= 2.5);
+    if (existing) {
+      existing.items.push(item);
+      existing.y = (existing.y + item.y) / 2;
+    } else {
+      lines.push({ y: item.y, items: [item] });
+    }
   }
-  return null;
+
+  return lines
+    .map((line) => ({ y: line.y, items: line.items.sort((a, b) => a.x - b.x) }))
+    .sort((a, b) => b.y - a.y);
 }
 
-function normalizeWord(text: string) {
-  return cleanText(text)
-    .replace(/\u0000/g, "")
-    .replace(/[\u2010\u2011\u2012\u2013\u2014]/g, "-");
+function lineStartsRow(line: TextLine) {
+  return line.items.some((item) => isInRange(item.x, COL.roMin, COL.roMax) && ROW_START_RE.test(item.text));
 }
 
-function lineKey(y: number) {
-  return Math.round(y / 2) * 2;
+function collectColumn(block: TextLine[], min: number, max: number) {
+  const values = block.flatMap((line) => line.items.filter((item) => isInRange(item.x, min, max)));
+  return cleanText(sortAndJoin(values));
 }
 
-function sortWordsIntoLines(words: PdfWord[]): PdfLine[] {
-  const buckets = new Map<number, PdfWord[]>();
-  for (const word of words) {
-    const key = lineKey(word.y);
-    const line = buckets.get(key) ?? [];
-    line.push(word);
-    buckets.set(key, line);
+function collectRo(block: TextLine[]) {
+  for (const line of block) {
+    for (const item of line.items) {
+      if (isInRange(item.x, COL.roMin, COL.roMax) && ROW_START_RE.test(item.text)) {
+        return item.text;
+      }
+    }
   }
-
-  return [...buckets.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([, line]) => line.sort((a, b) => a.x - b.x));
+  return "";
 }
 
-function collectPageWords(items: any[]): PdfWord[] {
-  const words: PdfWord[] = [];
-  for (const item of items) {
-    const text = normalizeWord(typeof item?.str === "string" ? item.str : "");
-    if (!text) continue;
-    const transform = Array.isArray(item?.transform) ? item.transform : [];
-    const x = Number(transform[4] ?? 0);
-    const y = Number(transform[5] ?? 0);
-    if (Number.isNaN(x) || Number.isNaN(y)) continue;
-    words.push({ text, x, y });
-  }
-  return words;
-}
+function toParsedRow(block: TextLine[]): ParsedRow | null {
+  const roNumber = collectRo(block);
+  if (!roNumber) return null;
 
-function finalizeRawRow(raw: RawPdfRow): ParsedRow | null {
-  const roNumber = cleanText(raw.ro.join(" "));
-  const owner = cleanText(raw.customer.join(" "));
-  const vehicle = cleanText(raw.vehicle.join(" "));
-  const estimator = cleanText(raw.estimator.join(" "));
-  const technicianRaw = cleanText(raw.tech.join(" "));
+  const owner = collectColumn(block, COL.customerMin, COL.customerMax);
+  const vehicle = collectColumn(block, COL.vehicleMin, COL.vehicleMax);
+  const estimator = collectColumn(block, COL.estimatorMin, COL.estimatorMax);
+  const technicianRaw = collectColumn(block, COL.techMin, COL.techMax);
   const technician = normalizeTechnicianName(technicianRaw) || UNASSIGNED_TECH_NAME;
-  const stage = normalizeStage(raw.phase.join(" "));
-  const roHours = Number(cleanText(raw.hours.join(" ")).replace(/,/g, ""));
+  const stage = normalizeStage(collectColumn(block, COL.phaseMin, COL.phaseMax));
+  const hoursText = collectColumn(block, COL.hoursMin, COL.hoursMax).replace(/,/g, "");
+  const roHours = Number(hoursText);
 
-  if (!/^390\d{4}$/.test(roNumber)) return null;
   if (!stage || Number.isNaN(roHours)) return null;
 
   return {
@@ -122,52 +114,60 @@ function finalizeRawRow(raw: RawPdfRow): ParsedRow | null {
   };
 }
 
-export async function parsePdfProductionList(buffer: Buffer): Promise<ParsedRow[]> {
+export async function parseProductionPdf(buffer: Buffer): Promise<ParsedRow[]> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(buffer),
     useSystemFonts: true,
     disableFontFace: true,
     isEvalSupported: false,
+    disableWorker: true,
   } as any);
 
   const pdf = await loadingTask.promise;
   const rows: ParsedRow[] = [];
 
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
     const textContent = await page.getTextContent();
-    const words = collectPageWords(textContent.items as any[]);
-    const lines = sortWordsIntoLines(words);
-    let current = makeEmptyRawRow();
-    let inDataSection = false;
+    const items = (textContent.items as TextItem[])
+      .map((item) => ({
+        text: cleanText(item.str ?? ""),
+        x: Number(item.transform?.[4] ?? 0),
+        y: Number(item.transform?.[5] ?? 0),
+      }))
+      .filter((item) => item.text);
 
+    const lines = groupLines(items).filter((line) => {
+      const joined = sortAndJoin(line.items).toLowerCase();
+      return !joined.includes("production list")
+        && !joined.includes("vehicles")
+        && !joined.includes("in out days ro # customer")
+        && !joined.includes("page ");
+    });
+
+    let current: TextLine[] = [];
     for (const line of lines) {
-      const roToken = line.find((word) => word.x >= COLUMN_RANGES.ro[0] && word.x < COLUMN_RANGES.ro[1] && /^390\d{4}$/.test(word.text))?.text;
-      if (!roToken && !inDataSection) continue;
-      if (line.some((word) => word.text === "RO") && line.some((word) => word.text === "Customer")) {
-        inDataSection = true;
-        continue;
-      }
-
-      if (roToken) {
-        const parsed = finalizeRawRow(current);
-        if (parsed) rows.push(parsed);
-        current = makeEmptyRawRow();
-      }
-
-      if (!inDataSection) continue;
-
-      for (const word of line) {
-        const column = classifyColumn(word.x);
-        if (!column) continue;
-        current[column].push(word.text);
+      if (lineStartsRow(line)) {
+        if (current.length) {
+          const parsed = toParsedRow(current);
+          if (parsed) rows.push(parsed);
+        }
+        current = [line];
+      } else if (current.length) {
+        current.push(line);
       }
     }
 
-    const parsed = finalizeRawRow(current);
-    if (parsed) rows.push(parsed);
+    if (current.length) {
+      const parsed = toParsedRow(current);
+      if (parsed) rows.push(parsed);
+    }
   }
 
-  return rows;
+  const deduped = new Map<string, ParsedRow>();
+  for (const row of rows) {
+    deduped.set(row.roNumber, row);
+  }
+  return Array.from(deduped.values());
 }
