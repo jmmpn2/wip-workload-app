@@ -124,6 +124,14 @@ function finalizeRawRow(raw: RawPdfRow): ParsedRow | null {
 
 export async function parsePdfProductionList(buffer: Buffer): Promise<ParsedRow[]> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const pdfWorker = await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+
+  // In the Next/Railway server bundle, letting PDF.js discover its own worker
+  // can fail because the generated chunk path is not available at runtime.
+  // Preloading the worker module here gives the fake-worker path a handler to use
+  // without trying to dynamically import /.next/server/chunks/pdf.worker.mjs.
+  (globalThis as any).pdfjsWorker = pdfWorker;
+
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(buffer),
     useSystemFonts: true,
