@@ -1,4 +1,4 @@
-# WIP Workload Version 2.7
+# WIP Feeder Version 2.7
 
 This update makes six requested changes:
 - tech detail page now shows all techs ranked against each other with Remaining Hours and Load %

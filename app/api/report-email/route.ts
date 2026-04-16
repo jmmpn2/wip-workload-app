@@ -76,11 +76,11 @@ export async function POST(request: NextRequest) {
 
     const subjectPrefix = shop.reportSubjectPrefix?.trim();
     const subject = subjectPrefix
-      ? `${subjectPrefix} - ${shop.name} WIP Workload Report`
-      : `${shop.name} WIP Workload Report`;
+      ? `${subjectPrefix} - ${shop.name} WIP Feeder Report`
+      : `${shop.name} WIP Feeder Report`;
 
     const textLines = [
-      `${shop.name} WIP Workload Report`,
+      `${shop.name} WIP Feeder Report`,
       "",
       `Total Jobs WIP: ${data.totals.totalJobs}`,
       `Total Hours WIP: ${data.totals.totalHoursWip}`,
