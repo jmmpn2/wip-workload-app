@@ -29,6 +29,7 @@ model Shop {
   jobHolds              JobHold[]
   handoutHolds          HandoutHold[]
   towInEstimateTags     TowInEstimateTag[]
+  jobBucketNotes        JobBucketNote[]
 }
 
 model Technician {
@@ -65,6 +66,8 @@ model CurrentWipRow {
   estimator         String   @default("")
   technician        String
   stage             String
+  insurance         String   @default("")
+  daysInShop        Int      @default(0)
   roHours           Float
   remainingHours    Float    @default(0)
   isHeld            Boolean  @default(false)
@@ -72,6 +75,7 @@ model CurrentWipRow {
   isHandoutHeld     Boolean  @default(false)
   handoutHoldReason String   @default("")
   isTowInEstimate   Boolean  @default(false)
+  handoutNote       String   @default("")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
@@ -111,6 +115,19 @@ model TowInEstimateTag {
   shopId      String
   roNumber    String
   isTagged    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, roNumber])
+}
+
+
+model JobBucketNote {
+  id         String   @id @default(cuid())
+  shopId      String
+  roNumber    String
+  note        String   @default("")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)

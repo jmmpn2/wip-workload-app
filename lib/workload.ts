@@ -9,6 +9,8 @@ type ParsedRow = {
   estimator: string;
   technician: string;
   stage: string;
+  insurance: string;
+  daysInShop: number;
   roHours: number;
 };
 
@@ -35,6 +37,8 @@ export function parseWorkbook(buffer: Buffer): ParsedRow[] {
   const estimatorIdx = idx("Estimator");
   const techIdx = idx("Tech");
   const phaseIdx = idx("Phase");
+  const insuranceIdx = idx("Insurance");
+  const daysIdx = idx("Days");
   const hoursIdx = idx("Hours");
 
   return body.map((row) => {
@@ -46,23 +50,28 @@ export function parseWorkbook(buffer: Buffer): ParsedRow[] {
     const technicianRaw = normalizeTechnicianName(row[techIdx]);
     const technician = technicianRaw || UNASSIGNED_TECH_NAME;
     const stage = normalizeStage(row[phaseIdx]);
+    const insurance = cleanText(insuranceIdx >= 0 ? row[insuranceIdx] : row[11]);
+    const daysValue = Number(cleanText(daysIdx >= 0 ? row[daysIdx] : row[2]));
+    const daysInShop = Number.isFinite(daysValue) ? Math.round(daysValue) : 0;
     const roHours = Number(cleanText(row[hoursIdx]));
-    return { roNumber, owner, vehicle, estimator, technician, stage, roHours };
+    return { roNumber, owner, vehicle, estimator, technician, stage, insurance, daysInShop, roHours };
   }).filter((row) => row.roNumber && row.stage && !Number.isNaN(row.roHours));
 }
 
 export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedRow[], sourceFileName: string) {
-  const [rules, techs, holds, handoutHolds, towInEstimateTags] = await Promise.all([
+  const [rules, techs, holds, handoutHolds, towInEstimateTags, jobNotes] = await Promise.all([
     prisma.stageRule.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.technician.findMany({ where: { shopId, isActive: true } }),
     prisma.jobHold.findMany({ where: { shopId, isHeld: true } }),
     prisma.handoutHold.findMany({ where: { shopId, isHeld: true } }),
     prisma.towInEstimateTag.findMany({ where: { shopId, isTagged: true } }),
+    prisma.jobBucketNote.findMany({ where: { shopId } }),
   ]);
   const ruleMap = new Map(rules.map((rule) => [rule.stageName, rule]));
   const holdMap = new Map(holds.map((hold) => [hold.roNumber, hold]));
   const handoutHoldMap = new Map(handoutHolds.map((hold) => [hold.roNumber, hold]));
   const towInEstimateMap = new Map(towInEstimateTags.map((tag) => [tag.roNumber, tag]));
+  const noteMap = new Map(jobNotes.map((note) => [note.roNumber, note]));
   const techNames = new Set(techs.map((tech) => normalizeTechnicianName(tech.name)));
 
   const prepared = rows.map((row) => {
@@ -70,6 +79,7 @@ export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedR
     const hold = holdMap.get(row.roNumber);
     const handoutHold = row.technician === UNASSIGNED_TECH_NAME ? handoutHoldMap.get(row.roNumber) : undefined;
     const towInEstimateTag = row.technician === UNASSIGNED_TECH_NAME ? towInEstimateMap.get(row.roNumber) : undefined;
+    const jobNote = noteMap.get(row.roNumber);
 
     let remainingHours = 0;
     if (rule && rule.includeInLoad && !hold) {
@@ -84,6 +94,8 @@ export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedR
       estimator: row.estimator,
       technician: row.technician,
       stage: row.stage,
+      insurance: row.insurance,
+      daysInShop: row.daysInShop,
       roHours: row.roHours,
       remainingHours,
       isHeld: !!hold,
@@ -91,6 +103,7 @@ export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedR
       isHandoutHeld: !!handoutHold,
       handoutHoldReason: handoutHold?.reason || "",
       isTowInEstimate: !!towInEstimateTag,
+      handoutNote: jobNote?.note || "",
     };
   });
 

@@ -127,6 +127,8 @@ export function buildDashboardEmailBodyHtml(params: {
     owner: string;
     vehicle: string;
     estimator?: string | null;
+    insurance?: string | null;
+    daysInShop?: number | null;
     stage: string;
     roHours: number;
     remainingHours: number;
@@ -137,6 +139,8 @@ export function buildDashboardEmailBodyHtml(params: {
     owner: string;
     vehicle: string;
     estimator?: string | null;
+    insurance?: string | null;
+    daysInShop?: number | null;
     stage: string;
     roHours: number;
     remainingHours: number;
@@ -201,13 +205,15 @@ export function buildDashboardEmailBodyHtml(params: {
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.owner)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.vehicle)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.estimator || "—")}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.insurance || "—")}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.daysInShop || 0))}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.stage)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.roHours))}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.remainingHours))}</td>
           </tr>`
         )
         .join("")
-    : `<tr><td colspan="7" style="padding:16px 12px; color:#64748b; text-align:center;">No unassigned jobs right now.</td></tr>`;
+    : `<tr><td colspan="9" style="padding:16px 12px; color:#64748b; text-align:center;">No unassigned jobs right now.</td></tr>`;
 
   const moreAssignableNote =
     params.assignableRows.length > assignableRows.length
@@ -224,13 +230,15 @@ export function buildDashboardEmailBodyHtml(params: {
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.owner)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.vehicle)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.estimator || "—")}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.insurance || "—")}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.daysInShop || 0))}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.stage)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.roHours))}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.remainingHours))}</td>
           </tr>`
         )
         .join("")
-    : `<tr><td colspan="7" style="padding:16px 12px; color:#64748b; text-align:center;">No tow-ins need estimates right now.</td></tr>`;
+    : `<tr><td colspan="9" style="padding:16px 12px; color:#64748b; text-align:center;">No tow-ins need estimates right now.</td></tr>`;
 
   const moreTowInNote =
     params.towInEstimateRows.length > towInRows.length
@@ -278,6 +286,8 @@ export function buildDashboardEmailBodyHtml(params: {
                 <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Owner</th>
                 <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Vehicle</th>
                 <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Estimator</th>
+                <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Insurance</th>
+                <th align="right" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Days</th>
                 <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Stage</th>
                 <th align="right" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">RO Hours</th>
                 <th align="right" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Remaining</th>
@@ -298,6 +308,8 @@ export function buildDashboardEmailBodyHtml(params: {
                 <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Owner</th>
                 <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Vehicle</th>
                 <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Estimator</th>
+                <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Insurance</th>
+                <th align="right" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Days</th>
                 <th align="left" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Stage</th>
                 <th align="right" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">RO Hours</th>
                 <th align="right" style="padding:0 12px 10px; border-bottom:1px solid #cbd5e1; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Remaining</th>

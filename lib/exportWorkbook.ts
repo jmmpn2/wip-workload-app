@@ -29,6 +29,8 @@ export function buildWorkbook(shopName: string, techRank: any[], rows: any[]) {
         Vehicle: row.vehicle,
         Estimator: row.estimator,
         Stage: row.stage,
+        Insurance: row.insurance || "",
+        Days: Math.round(row.daysInShop || 0),
         "RO Hours": Math.round(row.roHours),
         "Remaining Hours": Math.round(row.remainingHours),
         "On Hold": row.isHeld ? "YES" : "",
