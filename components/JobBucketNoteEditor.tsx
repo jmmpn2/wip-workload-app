@@ -1,37 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function JobBucketNoteEditor({ roNumber, initialNote }: { roNumber: string; initialNote: string }) {
   const [note, setNote] = useState(initialNote || "");
+  const [savedNote, setSavedNote] = useState(initialNote || "");
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestCounterRef = useRef(0);
 
-  async function saveNote() {
+  useEffect(() => {
+    setNote(initialNote || "");
+    setSavedNote(initialNote || "");
+    setStatus("");
+  }, [initialNote, roNumber]);
+
+  async function persistNote(nextNote: string) {
+    const requestId = ++requestCounterRef.current;
     try {
       setIsSaving(true);
       setStatus("Saving...");
       const res = await fetch("/api/job-notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roNumber, note }),
+        body: JSON.stringify({ roNumber, note: nextNote }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         setStatus(json.error || "Save failed.");
         return;
       }
+      if (requestId !== requestCounterRef.current) return;
+      setSavedNote(nextNote);
       setStatus("Saved");
-      window.setTimeout(() => setStatus(""), 1600);
+      window.setTimeout(() => {
+        if (requestId === requestCounterRef.current) setStatus("");
+      }, 1200);
     } catch {
-      setStatus("Save failed.");
+      if (requestId === requestCounterRef.current) setStatus("Save failed.");
     } finally {
-      setIsSaving(false);
+      if (requestId === requestCounterRef.current) setIsSaving(false);
     }
   }
 
+  useEffect(() => {
+    if (note === savedNote) return;
+    setStatus("Editing...");
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      void persistNote(note);
+    }, 700);
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [note, savedNote]);
+
+  async function clearNote() {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    setNote("");
+    await persistNote("");
+  }
+
   return (
-    <div className="min-w-[220px]">
+    <div className="w-[190px] min-w-[190px]">
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -42,13 +75,13 @@ export function JobBucketNoteEditor({ roNumber, initialNote }: { roNumber: strin
       <div className="mt-1 flex items-center justify-between gap-2">
         <button
           type="button"
-          onClick={saveNote}
-          disabled={isSaving}
+          onClick={() => void clearNote()}
+          disabled={isSaving && !note}
           className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
         >
-          {isSaving ? "Saving..." : "Save"}
+          Clear
         </button>
-        {status ? <span className="text-[11px] text-slate-500">{status}</span> : null}
+        {status ? <span className="text-[11px] text-slate-500">{status}</span> : <span className="text-[11px] text-transparent">Saved</span>}
       </div>
     </div>
   );

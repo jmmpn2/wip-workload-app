@@ -31,7 +31,7 @@ export function HandoutHoldToggleButton({ roNumber, isHeld, holdReason }: { roNu
       disabled={busy}
       className={`rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm disabled:opacity-60 ${isHeld ? "bg-slate-800 text-white hover:bg-slate-700" : "bg-amber-100 text-amber-900 hover:bg-amber-200"}`}
     >
-      {busy ? "Saving..." : isHeld ? "Undo Not Ready" : "Not Ready To Handout"}
+      {busy ? "Saving..." : isHeld ? "Undo Hold" : "Put on Hold"}
     </button>
   );
 }

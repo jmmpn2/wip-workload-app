@@ -66,22 +66,22 @@ function HandoutTable({ title, description, rows, variant }: { title: string; de
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
       <p className="mt-1 text-sm text-slate-600">{description}</p>
-      <div className="mt-4 max-h-[520px] overflow-auto">
-        <table className="min-w-full border-collapse text-sm">
+      <div className="mt-4 max-h-[520px] overflow-y-auto overflow-x-visible">
+        <table className="w-full table-fixed border-collapse text-sm">
           <thead className="sticky top-0 bg-white">
             <tr className="border-b border-slate-200 text-slate-600">
-              <SortableHeader label="RO #" sortKey="roNumber" activeKey={sortKey} direction={direction} onToggle={toggleSort} />
-              <SortableHeader label="Owner" sortKey="owner" activeKey={sortKey} direction={direction} onToggle={toggleSort} />
-              <SortableHeader label="Vehicle" sortKey="vehicle" activeKey={sortKey} direction={direction} onToggle={toggleSort} />
-              <SortableHeader label="Estimator" sortKey="estimator" activeKey={sortKey} direction={direction} onToggle={toggleSort} />
-              <SortableHeader label="Insurance" sortKey="insurance" activeKey={sortKey} direction={direction} onToggle={toggleSort} />
-              <SortableHeader label="Days" sortKey="daysInShop" activeKey={sortKey} direction={direction} onToggle={toggleSort} align="right" />
-              <SortableHeader label="Stage" sortKey="stage" activeKey={sortKey} direction={direction} onToggle={toggleSort} />
-              <SortableHeader label="RO Hours" sortKey="roHours" activeKey={sortKey} direction={direction} onToggle={toggleSort} align="right" />
-              <SortableHeader label="Remaining Hours" sortKey="remainingHours" activeKey={sortKey} direction={direction} onToggle={toggleSort} align="right" />
-              <SortableHeader label="Note" sortKey="handoutNote" activeKey={sortKey} direction={direction} onToggle={toggleSort} />
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2 print-hidden">Action</th>
+              <th className="w-[90px] px-3 py-2 text-left"><button type="button" onClick={() => toggleSort("roNumber")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>RO #</span><span className="text-xs text-slate-400">{sortKey === "roNumber" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[150px] px-3 py-2 text-left"><button type="button" onClick={() => toggleSort("owner")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>Owner</span><span className="text-xs text-slate-400">{sortKey === "owner" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[170px] px-3 py-2 text-left"><button type="button" onClick={() => toggleSort("vehicle")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>Vehicle</span><span className="text-xs text-slate-400">{sortKey === "vehicle" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[120px] px-3 py-2 text-left"><button type="button" onClick={() => toggleSort("estimator")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>Estimator</span><span className="text-xs text-slate-400">{sortKey === "estimator" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[160px] px-3 py-2 text-left"><button type="button" onClick={() => toggleSort("insurance")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>Insurance</span><span className="text-xs text-slate-400">{sortKey === "insurance" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[70px] px-3 py-2 text-right"><button type="button" onClick={() => toggleSort("daysInShop")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>Days</span><span className="text-xs text-slate-400">{sortKey === "daysInShop" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[120px] px-3 py-2 text-left"><button type="button" onClick={() => toggleSort("stage")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>Stage</span><span className="text-xs text-slate-400">{sortKey === "stage" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[95px] px-3 py-2 text-right"><button type="button" onClick={() => toggleSort("roHours")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>RO Hours</span><span className="text-xs text-slate-400">{sortKey === "roHours" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[130px] px-3 py-2 text-right"><button type="button" onClick={() => toggleSort("remainingHours")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>Remaining Hours</span><span className="text-xs text-slate-400">{sortKey === "remainingHours" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[205px] px-3 py-2 text-left"><button type="button" onClick={() => toggleSort("handoutNote")} className="inline-flex items-center gap-1 font-medium hover:text-slate-900"><span>Note</span><span className="text-xs text-slate-400">{sortKey === "handoutNote" ? (direction === "asc" ? "▲" : "▼") : "↕"}</span></button></th>
+              <th className="w-[140px] px-3 py-2">Status</th>
+              <th className="w-[170px] px-3 py-2 print-hidden">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -115,7 +115,7 @@ function HandoutTable({ title, description, rows, variant }: { title: string; de
                   ) : variant === "tow_in" ? (
                     <TowInEstimateToggleButton roNumber={row.roNumber} isTowInEstimate />
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2">
                       <TowInEstimateToggleButton roNumber={row.roNumber} isTowInEstimate={false} />
                       <HandoutHoldToggleButton roNumber={row.roNumber} isHeld={false} holdReason={row.handoutHoldReason || ""} />
                     </div>
