@@ -30,6 +30,7 @@ model Shop {
   handoutHolds          HandoutHold[]
   towInEstimateTags     TowInEstimateTag[]
   jobBucketNotes        JobBucketNote[]
+  highlightedInsuranceCompanies HighlightedInsuranceCompany[]
 }
 
 model Technician {
@@ -133,6 +134,17 @@ model JobBucketNote {
   shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@unique([shopId, roNumber])
+}
+
+model HighlightedInsuranceCompany {
+  id         String   @id @default(cuid())
+  shopId      String
+  insuranceName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, insuranceName])
 }
 
 model ImportRun {

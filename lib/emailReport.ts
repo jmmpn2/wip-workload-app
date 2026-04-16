@@ -122,6 +122,7 @@ export function buildDashboardEmailBodyHtml(params: {
   }>;
   stages: Array<{ stage: string; count: number; color: string }>;
   assignableRows: Array<{
+    isHighlightedInsurance?: boolean;
     id?: string;
     roNumber: string;
     owner: string;
@@ -134,6 +135,7 @@ export function buildDashboardEmailBodyHtml(params: {
     remainingHours: number;
   }>;
   towInEstimateRows: Array<{
+    isHighlightedInsurance?: boolean;
     id?: string;
     roNumber: string;
     owner: string;
@@ -200,12 +202,12 @@ export function buildDashboardEmailBodyHtml(params: {
     ? assignableRows
         .map(
           (row) => `
-          <tr>
-            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#0f172a;">${escapeHtml(row.roNumber)}</td>
+          <tr style="${row.isHighlightedInsurance ? "background:#f8fafc;" : ""}">
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#0f172a; ${row.isHighlightedInsurance ? "border-left:4px solid #0f172a; font-weight:700;" : ""}">${escapeHtml(row.roNumber)}${row.isHighlightedInsurance ? `<div style="margin-top:4px; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#475569;">★ Focus insurer</div>` : ""}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.owner)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.vehicle)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.estimator || "—")}</td>
-            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.insurance || "—")}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; ${row.isHighlightedInsurance ? "font-weight:700;" : ""}">${escapeHtml(row.insurance || "—")}${row.isHighlightedInsurance ? `<div style="margin-top:4px; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#475569;">Focus insurer</div>` : ""}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.daysInShop || 0))}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.stage)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.roHours))}</td>
@@ -225,12 +227,12 @@ export function buildDashboardEmailBodyHtml(params: {
     ? towInRows
         .map(
           (row) => `
-          <tr>
-            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#0f172a;">${escapeHtml(row.roNumber)}</td>
+          <tr style="${row.isHighlightedInsurance ? "background:#f8fafc;" : ""}">
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#0f172a; ${row.isHighlightedInsurance ? "border-left:4px solid #0f172a; font-weight:700;" : ""}">${escapeHtml(row.roNumber)}${row.isHighlightedInsurance ? `<div style="margin-top:4px; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#475569;">★ Focus insurer</div>` : ""}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.owner)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.vehicle)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.estimator || "—")}</td>
-            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.insurance || "—")}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; ${row.isHighlightedInsurance ? "font-weight:700;" : ""}">${escapeHtml(row.insurance || "—")}${row.isHighlightedInsurance ? `<div style="margin-top:4px; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#475569;">Focus insurer</div>` : ""}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.daysInShop || 0))}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155;">${escapeHtml(row.stage)}</td>
             <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; color:#334155; text-align:right;">${escapeHtml(Math.round(row.roHours))}</td>

@@ -18,6 +18,7 @@ type BucketRow = {
   remainingHours: number;
   handoutHoldReason?: string;
   handoutNote?: string;
+  isHighlightedInsurance?: boolean;
 };
 
 type SortKey = keyof Pick<BucketRow, "roNumber" | "owner" | "vehicle" | "estimator" | "insurance" | "daysInShop" | "stage" | "roHours" | "remainingHours" | "handoutNote">;
@@ -86,12 +87,12 @@ function HandoutTable({ title, description, rows, variant }: { title: string; de
           </thead>
           <tbody>
             {sortedRows.length ? sortedRows.map((row) => (
-              <tr key={row.id} className={`border-b border-slate-100 ${variant === "hold" ? "bg-amber-50" : variant === "tow_in" ? "bg-blue-50" : ""}`}>
-                <td className="px-3 py-2">{row.roNumber}</td>
+              <tr key={row.id} className={`border-b border-slate-100 ${row.isHighlightedInsurance ? "bg-slate-50 ring-1 ring-inset ring-slate-300" : variant === "hold" ? "bg-amber-50" : variant === "tow_in" ? "bg-blue-50" : ""}`}>
+                <td className={`px-3 py-2 ${row.isHighlightedInsurance ? "border-l-4 border-slate-900 font-semibold" : ""}`}><div>{row.roNumber}</div>{row.isHighlightedInsurance ? <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">★ Focus insurer</div> : null}</td>
                 <td className="px-3 py-2">{row.owner}</td>
                 <td className="px-3 py-2">{row.vehicle}</td>
                 <td className="px-3 py-2">{row.estimator || "—"}</td>
-                <td className="px-3 py-2">{row.insurance || "—"}</td>
+                <td className="px-3 py-2">{row.isHighlightedInsurance ? <div><div className="font-semibold text-slate-900">{row.insurance || "—"}</div><div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">Focus insurer</div></div> : (row.insurance || "—")}</td>
                 <td className="px-3 py-2 text-right">{Math.round(row.daysInShop || 0)}</td>
                 <td className="px-3 py-2">{row.stage}</td>
                 <td className="px-3 py-2 text-right">{Math.round(row.roHours)}</td>
@@ -113,7 +114,10 @@ function HandoutTable({ title, description, rows, variant }: { title: string; de
                   {variant === "hold" ? (
                     <HandoutHoldToggleButton roNumber={row.roNumber} isHeld holdReason={row.handoutHoldReason || ""} />
                   ) : variant === "tow_in" ? (
-                    <TowInEstimateToggleButton roNumber={row.roNumber} isTowInEstimate />
+                    <div className="flex flex-col gap-2">
+                      <TowInEstimateToggleButton roNumber={row.roNumber} isTowInEstimate />
+                      <HandoutHoldToggleButton roNumber={row.roNumber} isHeld={false} holdReason={row.handoutHoldReason || ""} />
+                    </div>
                   ) : (
                     <div className="flex flex-col gap-2">
                       <TowInEstimateToggleButton roNumber={row.roNumber} isTowInEstimate={false} />

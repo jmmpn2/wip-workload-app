@@ -1,13 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { STAGE_COLORS, UNASSIGNED_TECH_NAME, roundHours } from "@/lib/stages";
+import { isHighlightedInsurance } from "@/lib/insuranceHighlights";
 
 export async function getDashboardData(shopId: string) {
-  const [shop, rows, technicians, stageRules, lastImport] = await Promise.all([
+  const [shop, rows, technicians, stageRules, lastImport, highlightedInsuranceCompanies] = await Promise.all([
     prisma.shop.findUnique({ where: { id: shopId } }),
     prisma.currentWipRow.findMany({ where: { shopId }, orderBy: [{ technician: "asc" }, { roNumber: "asc" }] }),
     prisma.technician.findMany({ where: { shopId }, orderBy: { name: "asc" } }),
     prisma.stageRule.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.importRun.findFirst({ where: { shopId }, orderBy: { createdAt: "desc" } }),
+    prisma.highlightedInsuranceCompany.findMany({ where: { shopId }, orderBy: { insuranceName: "asc" } }),
   ]);
 
   if (!shop) {
@@ -27,9 +29,16 @@ export async function getDashboardData(shopId: string) {
     };
   }
 
+  const highlightedInsurers = highlightedInsuranceCompanies.map((row) => row.insuranceName);
+  const highlightedSet = new Set(highlightedInsurers);
+  const decoratedRows = rows.map((row) => ({
+    ...row,
+    isHighlightedInsurance: isHighlightedInsurance(row.insurance, highlightedSet),
+  }));
+
   const techRank = technicians
     .map((tech) => {
-      const techRows = rows.filter((row) => row.technician === tech.name);
+      const techRows = decoratedRows.filter((row) => row.technician === tech.name);
       const remainingHours = roundHours(techRows.reduce((sum, row) => sum + row.remainingHours, 0));
       const roHours = roundHours(techRows.reduce((sum, row) => sum + row.roHours, 0));
       const activeJobs = techRows.filter((row) => row.remainingHours > 0).length;
@@ -54,11 +63,11 @@ export async function getDashboardData(shopId: string) {
     .sort((a, b) => a.loadPct - b.loadPct || a.remainingHours - b.remainingHours || a.technician.localeCompare(b.technician))
     .map((row, index) => ({ ...row, rank: index + 1 }));
 
-  const totalJobs = rows.length;
-  const totalHoursWip = roundHours(rows.reduce((sum, row) => sum + row.roHours, 0));
-  const totalRemainingHours = roundHours(rows.reduce((sum, row) => sum + row.remainingHours, 0));
+  const totalJobs = decoratedRows.length;
+  const totalHoursWip = roundHours(decoratedRows.reduce((sum, row) => sum + row.roHours, 0));
+  const totalRemainingHours = roundHours(decoratedRows.reduce((sum, row) => sum + row.remainingHours, 0));
 
-  const unassignedRows = rows.filter((row) => row.technician === UNASSIGNED_TECH_NAME);
+  const unassignedRows = decoratedRows.filter((row) => row.technician === UNASSIGNED_TECH_NAME);
   const activeAssignableRows = unassignedRows.filter((row) => !row.isHandoutHeld && !row.isTowInEstimate);
   const towInEstimateRows = unassignedRows.filter((row) => row.isTowInEstimate && !row.isHandoutHeld);
   const handoutHoldRows = unassignedRows.filter((row) => row.isHandoutHeld);
@@ -70,7 +79,7 @@ export async function getDashboardData(shopId: string) {
   };
 
   const stageCounts = new Map<string, number>();
-  for (const row of rows) {
+  for (const row of decoratedRows) {
     stageCounts.set(row.stage, (stageCounts.get(row.stage) || 0) + 1);
   }
 
@@ -95,7 +104,7 @@ export async function getDashboardData(shopId: string) {
 
   return {
     shop,
-    rows,
+    rows: decoratedRows,
     technicians,
     stageRules,
     lastImport,
@@ -106,6 +115,7 @@ export async function getDashboardData(shopId: string) {
     assignableRows: sortRows(activeAssignableRows),
     towInEstimateRows: sortRows(towInEstimateRows),
     handoutHoldRows: sortRows(handoutHoldRows),
+    highlightedInsurers,
   };
 }
 

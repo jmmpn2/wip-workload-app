@@ -3,15 +3,18 @@ import { StageSettingsForm } from "@/components/StageSettingsForm";
 import { ShopThresholdSettingsForm } from "@/components/ShopThresholdSettingsForm";
 import { ReportRecipientsSettingsForm } from "@/components/ReportRecipientsSettingsForm";
 import { EmailSettingsForm } from "@/components/EmailSettingsForm";
+import { HighlightedInsuranceSettingsForm } from "@/components/HighlightedInsuranceSettingsForm";
 import { requireShopId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export default async function SettingsPage() {
   const shopId = await requireShopId();
-  const [shop, technicians, stages] = await Promise.all([
+  const [shop, technicians, stages, highlightedInsurers, currentRows] = await Promise.all([
     prisma.shop.findUniqueOrThrow({ where: { id: shopId } }),
     prisma.technician.findMany({ where: { shopId }, orderBy: { name: "asc" } }),
     prisma.stageRule.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.highlightedInsuranceCompany.findMany({ where: { shopId }, orderBy: { insuranceName: "asc" } }),
+    prisma.currentWipRow.findMany({ where: { shopId, insurance: { not: "" } }, select: { insurance: true } }),
   ]);
 
   return (
@@ -28,6 +31,10 @@ export default async function SettingsPage() {
         overloadedThreshold={shop.overloadedThreshold}
       />
       <ReportRecipientsSettingsForm reportRecipients={shop.reportRecipients || ""} />
+      <HighlightedInsuranceSettingsForm
+        highlightedInsurers={highlightedInsurers.map((row) => row.insuranceName)}
+        availableInsurers={[...new Set(currentRows.map((row) => row.insurance))].sort((a, b) => a.localeCompare(b))}
+      />
       <EmailSettingsForm
         smtpProvider={shop.smtpProvider || "gmail_api"}
         smtpHost={shop.smtpHost || "smtp.gmail.com"}

@@ -94,6 +94,8 @@ export default async function PrintAllTechReportsPage() {
                       <th className="px-3 py-2 print:px-2 print:py-1.5">Owner</th>
                       <th className="px-3 py-2 print:px-2 print:py-1.5">Vehicle</th>
                       <th className="px-3 py-2 print:px-2 print:py-1.5">Estimator</th>
+                      <th className="px-3 py-2 print:px-2 print:py-1.5">Insurance</th>
+                      <th className="px-3 py-2 print:px-2 print:py-1.5">Days</th>
                       <th className="px-3 py-2 print:px-2 print:py-1.5">Stage</th>
                       <th className="px-3 py-2 print:px-2 print:py-1.5">RO Hours</th>
                       <th className="px-3 py-2 print:px-2 print:py-1.5">Remaining Hours</th>
@@ -104,12 +106,14 @@ export default async function PrintAllTechReportsPage() {
                     {data.rows.map((row) => (
                       <tr
                         key={row.id}
-                        className={`border-b border-slate-100 ${row.isHeld ? "bg-amber-50" : ""}`}
+                        className={`border-b border-slate-100 ${row.isHighlightedInsurance ? "bg-slate-50 print:bg-white" : row.isHeld ? "bg-amber-50" : ""}`}
                       >
-                        <td className="px-3 py-2 print:px-2 print:py-1.5">{row.roNumber}</td>
+                        <td className={`px-3 py-2 print:px-2 print:py-1.5 ${row.isHighlightedInsurance ? "border-l-4 border-slate-900 font-semibold" : ""}`}>{row.roNumber}{row.isHighlightedInsurance ? <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600 print:text-black">★ Focus insurer</div> : null}</td>
                         <td className="px-3 py-2 print:px-2 print:py-1.5">{row.owner}</td>
                         <td className="px-3 py-2 print:px-2 print:py-1.5">{row.vehicle}</td>
                         <td className="px-3 py-2 print:px-2 print:py-1.5">{row.estimator || "—"}</td>
+                        <td className="px-3 py-2 print:px-2 print:py-1.5">{row.isHighlightedInsurance ? <div><div className="font-semibold">{row.insurance || "—"}</div><div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600 print:text-black">Focus insurer</div></div> : (row.insurance || "—")}</td>
+                        <td className="px-3 py-2 print:px-2 print:py-1.5">{Math.round(row.daysInShop || 0)}</td>
                         <td className="px-3 py-2 print:px-2 print:py-1.5">{row.stage}</td>
                         <td className="px-3 py-2 print:px-2 print:py-1.5">{Math.round(row.roHours)}</td>
                         <td className="px-3 py-2 print:px-2 print:py-1.5">{Math.round(row.remainingHours)}</td>
