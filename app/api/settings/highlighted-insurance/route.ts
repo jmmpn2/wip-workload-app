@@ -7,7 +7,9 @@ export async function POST(request: NextRequest) {
   const shopId = await requireShopId();
   const body = await request.json();
   const highlightedInsurers = Array.isArray(body.highlightedInsurers)
-    ? body.highlightedInsurers.map((value) => cleanText(value)).filter(Boolean)
+    ? body.highlightedInsurers
+    .map((value: unknown) => cleanText(typeof value === "string" ? value : ""))
+    .filter(Boolean)
     : [];
 
   await prisma.$transaction(async (tx) => {
