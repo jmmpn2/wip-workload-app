@@ -43,4 +43,3 @@ export function normalizeStage(value: unknown) {
 }
 export function normalizeTechnicianName(value: unknown) { return cleanText(value); }
 export function roundHours(value: number) { return Math.round(value || 0); }
-##
