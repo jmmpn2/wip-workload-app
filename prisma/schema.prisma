@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  SUPER_ADMIN
+  EXECUTIVE
+  SHOP_MANAGER
+  SERVICE_WRITER
+  FDR
+}
+
 model Shop {
   id                    String         @id @default(cuid())
   name                  String         @unique
@@ -31,7 +39,26 @@ model Shop {
   towInEstimateTags     TowInEstimateTag[]
   jobBucketNotes        JobBucketNote[]
   highlightedInsuranceCompanies HighlightedInsuranceCompany[]
-  auditLogs              ShopAuditLog[]
+  auditLogs             ShopAuditLog[]
+  users                 User[]
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  passwordHash       String
+  role               UserRole
+  shopId             String?
+  mustChangePassword Boolean   @default(true)
+  isActive           Boolean   @default(true)
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  shop               Shop?     @relation(fields: [shopId], references: [id], onDelete: SetNull)
+  auditLogs          ShopAuditLog[]
+
+  @@index([role])
+  @@index([shopId])
 }
 
 model ShopAuditLog {
@@ -42,11 +69,15 @@ model ShopAuditLog {
   entityId    String?
   summary     String
   metadata    Json?
+  actorUserId String?
+  actorEmail  String?
   createdAt   DateTime @default(now())
   shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  actorUser   User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
 
   @@index([shopId, createdAt])
   @@index([shopId, action])
+  @@index([actorUserId])
 }
 
 model Technician {
@@ -139,7 +170,6 @@ model TowInEstimateTag {
   @@unique([shopId, roNumber])
 }
 
-
 model JobBucketNote {
   id         String   @id @default(cuid())
   shopId      String
@@ -153,12 +183,12 @@ model JobBucketNote {
 }
 
 model HighlightedInsuranceCompany {
-  id         String   @id @default(cuid())
-  shopId      String
+  id           String   @id @default(cuid())
+  shopId        String
   insuranceName String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  shop          Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@unique([shopId, insuranceName])
 }

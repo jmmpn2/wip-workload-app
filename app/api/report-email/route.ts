@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireShopId } from "@/lib/auth";
+import { assertRoleAccessOrThrow, getCurrentShopIdFromSession } from "@/lib/auth";
 import { getDashboardData } from "@/lib/dashboard";
 import { sendReportEmail } from "@/lib/mailer";
 import { buildDashboardEmailHtml } from "@/lib/emailReport";
@@ -38,7 +38,9 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
 
 export async function POST(request: NextRequest) {
   try {
-    const shopId = await requireShopId();
+    const session = await assertRoleAccessOrThrow({ dashboard: true });
+    const shopId = await getCurrentShopIdFromSession(session);
+    if (!shopId) return NextResponse.json({ error: "No shop selected." }, { status: 400 });
     const data = await getDashboardData(shopId);
 
     if (!data.rows.length) {

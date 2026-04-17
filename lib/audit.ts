@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
 type LogAuditArgs = {
   shopId: string;
@@ -11,7 +12,6 @@ type LogAuditArgs = {
 
 function sanitizeMetadata(value: unknown) {
   if (value === undefined) return undefined;
-
   try {
     return JSON.parse(JSON.stringify(value));
   } catch {
@@ -21,6 +21,7 @@ function sanitizeMetadata(value: unknown) {
 
 export async function logShopAudit(args: LogAuditArgs) {
   try {
+    const session = await getSession();
     await prisma.shopAuditLog.create({
       data: {
         shopId: args.shopId,
@@ -29,6 +30,8 @@ export async function logShopAudit(args: LogAuditArgs) {
         entityId: args.entityId ?? null,
         summary: args.summary,
         metadata: sanitizeMetadata(args.metadata),
+        actorUserId: session?.userId,
+        actorEmail: session?.email,
       },
     });
   } catch (error) {

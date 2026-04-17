@@ -4,12 +4,16 @@ import { StageBars } from "@/components/StageBars";
 import { TechRankingTable } from "@/components/TechRankingTable";
 import { UploadCard } from "@/components/UploadCard";
 import { AssignableJobsTable } from "@/components/AssignableJobsTable";
-import { requireShopId } from "@/lib/auth";
 import { getDashboardData } from "@/lib/dashboard";
+import { getSession, requireActiveShopId, requireRoleAccess } from "@/lib/auth";
+import { canEditNotes, canImportWip, canMoveJobs } from "@/lib/permissions";
 
 export default async function DashboardPage() {
-  const shopId = await requireShopId();
+  await requireRoleAccess({ dashboard: true });
+  const shopId = await requireActiveShopId();
+  const session = await getSession();
   const data = await getDashboardData(shopId);
+  const role = session?.role ?? "FDR";
 
   return (
     <div className="space-y-4">
@@ -25,12 +29,12 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <MetricsCards totals={data.totals} unassigned={data.unassigned} />
-        <UploadCard />
+        {canImportWip(role) ? <UploadCard /> : null}
       </div>
 
       <StageBars stages={data.stages} />
       <TechRankingTable techRank={data.techRank} />
-      <AssignableJobsTable rows={data.assignableRows} towInRows={data.towInEstimateRows} holdRows={data.handoutHoldRows} />
+      <AssignableJobsTable rows={data.assignableRows} towInRows={data.towInEstimateRows} holdRows={data.handoutHoldRows} canMoveJobs={canMoveJobs(role)} canEditNotes={canEditNotes(role)} />
     </div>
   );
 }
