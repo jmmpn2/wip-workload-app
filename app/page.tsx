@@ -15,10 +15,10 @@ export default async function HomePage() {
   });
 
   return (
-    <div className="mx-auto max-w-md pt-10">
-      <div className="mb-6 text-center">
-        <Image src="/logo.png" alt="WIP Feeder" width={360} height={178} priority className="mx-auto mb-4 h-auto w-full max-w-[320px]" />
-        <p className="mt-2 text-slate-600">Login and choose your shop to view workload rankings.</p>
+    <div className="mx-auto max-w-md pt-8">
+      <div className="mb-5 text-center">
+        <Image src="/logo.png" alt="WIP Feeder" width={320} height={159} className="mx-auto h-auto w-[280px]" priority />
+        <p className="mt-3 text-slate-600">Login and choose your shop to view workload rankings.</p>
       </div>
       <LoginForm shops={shops} />
     </div>
