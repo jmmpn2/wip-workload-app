@@ -93,3 +93,15 @@ For Microsoft 365 later, switch the provider to Microsoft 365 and use:
 ## Railway Gmail setup
 
 For Railway, use the Gmail API instead of Gmail SMTP. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REFRESH_TOKEN` in Railway Variables, then choose `Gmail API` in the app settings.
+
+
+## Shop Audit Log
+
+This app now includes a shop-scoped audit log. Each shop only sees its own activity, which keeps the structure ready for future multi-shop expansion.
+
+After pulling this update, run Prisma against the database before starting the app:
+
+```powershell
+npx prisma generate
+npx prisma db push
+```

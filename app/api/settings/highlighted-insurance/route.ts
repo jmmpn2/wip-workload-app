@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireShopId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cleanText } from "@/lib/stages";
+import { logShopAudit } from "@/lib/audit";
 
 type HighlightedInsuranceBody = {
   highlightedInsurers?: unknown;
@@ -24,6 +25,14 @@ export async function POST(request: NextRequest) {
         data: highlightedInsurers.map((insuranceName: string) => ({ shopId, insuranceName })),
       });
     }
+  });
+
+  await logShopAudit({
+    shopId,
+    action: "UPDATE_HIGHLIGHTED_INSURANCE",
+    entityType: "SETTINGS",
+    summary: `Updated highlighted insurance companies (${highlightedInsurers.length} selected).`,
+    metadata: { highlightedInsurers },
   });
 
   return NextResponse.json({ ok: true });

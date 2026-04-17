@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireShopId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logShopAudit } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
   const shopId = await requireShopId();
@@ -27,6 +28,15 @@ export async function POST(request: NextRequest) {
       data: { isHeld: false, holdReason: "" },
     });
 
+    await logShopAudit({
+      shopId,
+      action: "RELEASE_JOB_HOLD",
+      entityType: "JOB_HOLD",
+      entityId: roNumber,
+      summary: `Released technician hold for RO ${roNumber}.`,
+      metadata: { roNumber },
+    });
+
     return NextResponse.json({ ok: true, isHeld: false });
   }
 
@@ -39,6 +49,15 @@ export async function POST(request: NextRequest) {
   await prisma.currentWipRow.updateMany({
     where: { shopId, roNumber },
     data: { isHeld: true, holdReason: reason, remainingHours: 0 },
+  });
+
+  await logShopAudit({
+    shopId,
+    action: "APPLY_JOB_HOLD",
+    entityType: "JOB_HOLD",
+    entityId: roNumber,
+    summary: reason ? `Placed RO ${roNumber} on technician hold: ${reason}.` : `Placed RO ${roNumber} on technician hold.`,
+    metadata: { roNumber, reason },
   });
 
   return NextResponse.json({ ok: true, isHeld: true });

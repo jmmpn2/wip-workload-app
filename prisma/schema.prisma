@@ -31,6 +31,22 @@ model Shop {
   towInEstimateTags     TowInEstimateTag[]
   jobBucketNotes        JobBucketNote[]
   highlightedInsuranceCompanies HighlightedInsuranceCompany[]
+  auditLogs              ShopAuditLog[]
+}
+
+model ShopAuditLog {
+  id         String   @id @default(cuid())
+  shopId      String
+  action      String
+  entityType  String
+  entityId    String?
+  summary     String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+  @@index([shopId, action])
 }
 
 model Technician {

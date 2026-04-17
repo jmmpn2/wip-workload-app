@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireShopId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logShopAudit } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
   const shopId = await requireShopId();
@@ -26,6 +27,15 @@ export async function POST(request: NextRequest) {
   await prisma.currentWipRow.updateMany({
     where: { shopId, roNumber },
     data: { handoutNote: note },
+  });
+
+  await logShopAudit({
+    shopId,
+    action: note ? "SAVE_JOB_NOTE" : "CLEAR_JOB_NOTE",
+    entityType: "JOB_NOTE",
+    entityId: roNumber,
+    summary: note ? `Updated handout note for RO ${roNumber}.` : `Cleared handout note for RO ${roNumber}.`,
+    metadata: { roNumber, note },
   });
 
   return NextResponse.json({ ok: true, note });

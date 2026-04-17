@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireShopId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { UNASSIGNED_TECH_NAME } from "@/lib/stages";
+import { logShopAudit } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
   const shopId = await requireShopId();
@@ -40,6 +41,15 @@ export async function POST(request: NextRequest) {
       data: { isTowInEstimate: false },
     });
 
+    await logShopAudit({
+      shopId,
+      action: "CLEAR_TOW_IN_ESTIMATE",
+      entityType: "TOW_IN_ESTIMATE",
+      entityId: roNumber,
+      summary: `Removed Tow In - Needs Estimate tag from RO ${roNumber}.`,
+      metadata: { roNumber },
+    });
+
     return NextResponse.json({ ok: true, isTowInEstimate: false });
   }
 
@@ -52,6 +62,15 @@ export async function POST(request: NextRequest) {
   await prisma.currentWipRow.updateMany({
     where: { shopId, roNumber, technician: UNASSIGNED_TECH_NAME },
     data: { isTowInEstimate: true },
+  });
+
+  await logShopAudit({
+    shopId,
+    action: "MARK_TOW_IN_ESTIMATE",
+    entityType: "TOW_IN_ESTIMATE",
+    entityId: roNumber,
+    summary: `Marked RO ${roNumber} as Tow In - Needs Estimate.`,
+    metadata: { roNumber },
   });
 
   return NextResponse.json({ ok: true, isTowInEstimate: true });

@@ -28,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <nav className="flex gap-4 text-sm text-slate-600">
                 <Link href="/dashboard">Dashboard</Link>
                 <Link href="/settings">Settings</Link>
+                <Link href="/audit-log">Audit Log</Link>
                 <form action="/api/logout" method="post">
                   <button className="text-slate-600">Logout</button>
                 </form>

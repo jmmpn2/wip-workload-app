@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireShopId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logShopAudit } from "@/lib/audit";
 import { UNASSIGNED_TECH_NAME } from "@/lib/stages";
 
 export async function POST(request: NextRequest) {
@@ -37,6 +38,15 @@ export async function POST(request: NextRequest) {
       data: { isHandoutHeld: false, handoutHoldReason: "" },
     });
 
+    await logShopAudit({
+      shopId,
+      action: "RELEASE_HANDOUT_HOLD",
+      entityType: "HANDOUT_HOLD",
+      entityId: roNumber,
+      summary: `Released Cars on Hold status for RO ${roNumber}.`,
+      metadata: { roNumber },
+    });
+
     return NextResponse.json({ ok: true, isHeld: false });
   }
 
@@ -49,6 +59,15 @@ export async function POST(request: NextRequest) {
   await prisma.currentWipRow.updateMany({
     where: { shopId, roNumber, technician: UNASSIGNED_TECH_NAME },
     data: { isHandoutHeld: true, handoutHoldReason: reason },
+  });
+
+  await logShopAudit({
+    shopId,
+    action: "APPLY_HANDOUT_HOLD",
+    entityType: "HANDOUT_HOLD",
+    entityId: roNumber,
+    summary: reason ? `Moved RO ${roNumber} to Cars on Hold: ${reason}.` : `Moved RO ${roNumber} to Cars on Hold.`,
+    metadata: { roNumber, reason },
   });
 
   return NextResponse.json({ ok: true, isHeld: true });

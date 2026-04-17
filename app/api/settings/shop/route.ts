@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireShopId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logShopAudit } from "@/lib/audit";
 
 export async function POST(request: NextRequest) {
   const shopId = await requireShopId();
@@ -67,6 +68,17 @@ export async function POST(request: NextRequest) {
   await prisma.shop.update({
     where: { id: shopId },
     data,
+  });
+
+  const changedKeys = Object.keys(data);
+  await logShopAudit({
+    shopId,
+    action: "UPDATE_SHOP_SETTINGS",
+    entityType: "SETTINGS",
+    summary: changedKeys.length
+      ? `Updated shop settings: ${changedKeys.join(", ")}.`
+      : "Saved shop settings.",
+    metadata: { changedKeys, values: data },
   });
 
   return NextResponse.json({ ok: true });
