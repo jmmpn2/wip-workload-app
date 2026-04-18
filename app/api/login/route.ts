@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
 
   await createSession({
     userId: user.id,
+    name: user.name || user.email,
     email: user.email,
     role: user.role,
     shopId: user.shopId,

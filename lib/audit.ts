@@ -32,6 +32,7 @@ export async function logShopAudit(args: LogAuditArgs) {
         metadata: sanitizeMetadata(args.metadata),
         actorUserId: session?.userId,
         actorEmail: session?.email,
+        actorName: session?.name || null,
       },
     });
   } catch (error) {

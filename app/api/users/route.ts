@@ -10,6 +10,7 @@ async function listUsers(actorRole: string, actorShopId: string | null) {
   const rows = await prisma.user.findMany({ where: canAll ? {} : { shopId: actorShopId || undefined }, include: { shop: true }, orderBy: [{ role: "asc" }, { email: "asc" }] });
   return rows.map((user) => ({
     id: user.id,
+    name: user.name,
     email: user.email,
     role: user.role,
     isActive: user.isActive,
@@ -23,22 +24,23 @@ export async function POST(request: NextRequest) {
   try {
     const session = await assertRoleAccessOrThrow({ users: true });
     const body = await request.json();
+    const name = String(body.name || "").trim();
     const email = String(body.email || "").trim().toLowerCase();
     const role = String(body.role || "") as any;
     const shopId = body.shopId ? String(body.shopId) : null;
     const tempPassword = String(body.tempPassword || "");
-    if (!email || !tempPassword || tempPassword.length < 4) return NextResponse.json({ error: "Email and temporary password are required." }, { status: 400 });
+    if (!name || !email || !tempPassword || tempPassword.length < 4) return NextResponse.json({ error: "Name, email, and temporary password are required." }, { status: 400 });
     if (!allowedRoleOptions(session.role).includes(role)) return NextResponse.json({ error: "You cannot create that role." }, { status: 403 });
     if (!["SUPER_ADMIN", "EXECUTIVE"].includes(role) && !shopId) return NextResponse.json({ error: "A shop is required for that role." }, { status: 400 });
     if (!canAccessAllShops(session.role) && shopId !== session.shopId) return NextResponse.json({ error: "You can only create users for your own shop." }, { status: 403 });
 
     const passwordHash = await hashPassword(tempPassword);
-    const created = await prisma.user.create({ data: { email, role, shopId: role === "SUPER_ADMIN" || role === "EXECUTIVE" ? null : shopId, passwordHash, mustChangePassword: true, isActive: true } });
+    const created = await prisma.user.create({ data: { name, email, role, shopId: role === "SUPER_ADMIN" || role === "EXECUTIVE" ? null : shopId, passwordHash, mustChangePassword: true, isActive: true } });
     const effectiveShopId = role === "SUPER_ADMIN" || role === "EXECUTIVE" ? session.shopId || shopId : shopId;
     if (effectiveShopId) {
-      await logShopAudit({ shopId: effectiveShopId, action: "CREATE_USER", entityType: "USER", entityId: created.id, summary: `Created ${role} account for ${email}.`, metadata: { email, role } });
+      await logShopAudit({ shopId: effectiveShopId, action: "CREATE_USER", entityType: "USER", entityId: created.id, summary: `Created ${role} account for ${name}.`, metadata: { name, email, role } });
     }
-    return NextResponse.json({ ok: true, created: { id: created.id, email: created.email }, users: await listUsers(session.role, session.shopId) });
+    return NextResponse.json({ ok: true, created: { id: created.id, name: created.name, email: created.email }, users: await listUsers(session.role, session.shopId) });
   } catch (error) {
     const auth = errorResponseFromAuthError(error);
     return NextResponse.json(auth.body, { status: auth.status });

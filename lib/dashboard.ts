@@ -29,12 +29,21 @@ export async function getDashboardData(shopId: string) {
     };
   }
 
+  const notes = await prisma.jobBucketNote.findMany({ where: { shopId } });
+  const noteMap = new Map(notes.map((note) => [note.roNumber, note]));
+
   const highlightedInsurers = highlightedInsuranceCompanies.map((row) => row.insuranceName);
   const highlightedSet = new Set(highlightedInsurers);
-  const decoratedRows = rows.map((row) => ({
-    ...row,
-    isHighlightedInsurance: isHighlightedInsurance(row.insurance, highlightedSet),
-  }));
+  const decoratedRows = rows.map((row) => {
+    const noteMeta = noteMap.get(row.roNumber);
+    return {
+      ...row,
+      handoutNote: noteMeta?.note ?? row.handoutNote,
+      noteLastEditedByName: noteMeta?.lastEditedByName ?? null,
+      noteLastEditedAt: noteMeta?.lastEditedAt ? noteMeta.lastEditedAt.toISOString() : null,
+      isHighlightedInsurance: isHighlightedInsurance(row.insurance, highlightedSet),
+    };
+  });
 
   const techRank = technicians
     .map((tech) => {

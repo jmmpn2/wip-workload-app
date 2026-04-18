@@ -18,6 +18,8 @@ type BucketRow = {
   remainingHours: number;
   handoutHoldReason?: string;
   handoutNote?: string;
+  noteLastEditedByName?: string | null;
+  noteLastEditedAt?: string | null;
   isHighlightedInsurance?: boolean;
 };
 
@@ -71,7 +73,7 @@ function HandoutTable({ title, description, rows, variant, canMoveJobs, canEditN
               <tr key={row.id} className={`border-b border-slate-100 ${row.isHighlightedInsurance ? "bg-slate-50 ring-1 ring-inset ring-slate-300" : variant === "hold" ? "bg-amber-50" : variant === "tow_in" ? "bg-blue-50" : ""}`}>
                 <td className={`px-3 py-2 ${row.isHighlightedInsurance ? "border-l-4 border-slate-900 font-semibold" : ""}`}><div>{row.roNumber}</div>{row.isHighlightedInsurance ? <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">★ Focus insurer</div> : null}</td>
                 <td className="px-3 py-2">{row.owner}</td><td className="px-3 py-2">{row.vehicle}</td><td className="px-3 py-2">{row.estimator || "—"}</td><td className="px-3 py-2">{row.isHighlightedInsurance ? <div><div className="font-semibold text-slate-900">{row.insurance || "—"}</div><div className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">Focus insurer</div></div> : (row.insurance || "—")}</td><td className="px-3 py-2 text-right">{Math.round(row.daysInShop || 0)}</td><td className="px-3 py-2">{row.stage}</td><td className="px-3 py-2 text-right">{Math.round(row.roHours)}</td><td className="px-3 py-2 text-right">{Math.round(row.remainingHours)}</td>
-                <td className="px-3 py-2">{canEditNotes ? <JobBucketNoteEditor roNumber={row.roNumber} initialNote={row.handoutNote || ""} /> : <div className="w-[190px] min-w-[190px] rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-700 whitespace-pre-wrap">{row.handoutNote || "—"}</div>}</td>
+                <td className="px-3 py-2">{canEditNotes ? <JobBucketNoteEditor roNumber={row.roNumber} initialNote={row.handoutNote || ""} initialLastEditedByName={row.noteLastEditedByName || null} initialLastEditedAt={row.noteLastEditedAt || null} /> : <div title={row.noteLastEditedByName && row.noteLastEditedAt ? `Last edited by ${row.noteLastEditedByName} on ${new Date(row.noteLastEditedAt).toLocaleString()}` : undefined} className="w-[190px] min-w-[190px] rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 text-xs text-slate-700 whitespace-pre-wrap">{row.handoutNote || "—"}</div>}</td>
                 <td className="px-3 py-2">{variant === "hold" ? <div className="text-amber-800"><div className="font-semibold">ON HOLD</div>{row.handoutHoldReason ? <div className="text-xs">{row.handoutHoldReason}</div> : null}</div> : variant === "tow_in" ? <div className="font-semibold text-blue-800">Tow in - Needs Estimate</div> : <span className="text-slate-400">Ready to handout</span>}</td>
                 {canMoveJobs ? <td className="px-3 py-2 print-hidden">{variant === "hold" ? <HandoutHoldToggleButton roNumber={row.roNumber} isHeld holdReason={row.handoutHoldReason || ""} /> : variant === "tow_in" ? <div className="flex flex-col gap-2"><TowInEstimateToggleButton roNumber={row.roNumber} isTowInEstimate /><HandoutHoldToggleButton roNumber={row.roNumber} isHeld={false} holdReason={row.handoutHoldReason || ""} /></div> : <div className="flex flex-col gap-2"><TowInEstimateToggleButton roNumber={row.roNumber} isTowInEstimate={false} /><HandoutHoldToggleButton roNumber={row.roNumber} isHeld={false} holdReason={row.handoutHoldReason || ""} /></div>}</td> : null}
               </tr>

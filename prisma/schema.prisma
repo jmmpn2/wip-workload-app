@@ -45,6 +45,7 @@ model Shop {
 
 model User {
   id                 String    @id @default(cuid())
+  name               String    @default("")
   email              String    @unique
   passwordHash       String
   role               UserRole
@@ -71,6 +72,7 @@ model ShopAuditLog {
   metadata    Json?
   actorUserId String?
   actorEmail  String?
+  actorName   String?
   createdAt   DateTime @default(now())
   shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   actorUser   User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
@@ -171,12 +173,15 @@ model TowInEstimateTag {
 }
 
 model JobBucketNote {
-  id         String   @id @default(cuid())
-  shopId      String
-  roNumber    String
-  note        String   @default("")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String    @id @default(cuid())
+  shopId            String
+  roNumber          String
+  note              String    @default("")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastEditedByUserId String?
+  lastEditedByName  String?
+  lastEditedAt      DateTime?
   shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@unique([shopId, roNumber])

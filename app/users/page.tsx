@@ -21,7 +21,7 @@ export default async function UsersPage() {
         <p className="mt-1 text-slate-600">Create users, reset passwords, and activate or deactivate accounts.</p>
       </div>
       <UserManagementForm
-        users={users.map((user) => ({ id: user.id, email: user.email, role: user.role, isActive: user.isActive, mustChangePassword: user.mustChangePassword, shopName: user.shop?.name || null, lastLoginAt: formatDateTime(user.lastLoginAt) }))}
+        users={users.map((user) => ({ id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.isActive, mustChangePassword: user.mustChangePassword, shopName: user.shop?.name || null, lastLoginAt: formatDateTime(user.lastLoginAt) }))}
         shops={shops}
         allowedRoles={allowedRoleOptions(session.role)}
         canManageAllShops={canAll}

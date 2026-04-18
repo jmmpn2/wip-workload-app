@@ -2,10 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export function JobBucketNoteEditor({ roNumber, initialNote }: { roNumber: string; initialNote: string }) {
+function formatMeta(name: string | null, when: string | null) {
+  if (!name || !when) return "";
+  const formatted = new Date(when).toLocaleString();
+  return `Last edited by ${name} on ${formatted}`;
+}
+
+export function JobBucketNoteEditor({ roNumber, initialNote, initialLastEditedByName, initialLastEditedAt }: { roNumber: string; initialNote: string; initialLastEditedByName?: string | null; initialLastEditedAt?: string | null }) {
   const [note, setNote] = useState(initialNote || "");
   const [savedNote, setSavedNote] = useState(initialNote || "");
   const [status, setStatus] = useState("");
+  const [lastEditedByName, setLastEditedByName] = useState(initialLastEditedByName || "");
+  const [lastEditedAt, setLastEditedAt] = useState(initialLastEditedAt || "");
   const [isSaving, setIsSaving] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestCounterRef = useRef(0);
@@ -14,7 +22,9 @@ export function JobBucketNoteEditor({ roNumber, initialNote }: { roNumber: strin
     setNote(initialNote || "");
     setSavedNote(initialNote || "");
     setStatus("");
-  }, [initialNote, roNumber]);
+    setLastEditedByName(initialLastEditedByName || "");
+    setLastEditedAt(initialLastEditedAt || "");
+  }, [initialNote, initialLastEditedAt, initialLastEditedByName, roNumber]);
 
   async function persistNote(nextNote: string) {
     const requestId = ++requestCounterRef.current;
@@ -33,6 +43,8 @@ export function JobBucketNoteEditor({ roNumber, initialNote }: { roNumber: strin
       }
       if (requestId !== requestCounterRef.current) return;
       setSavedNote(nextNote);
+      setLastEditedByName(json.lastEditedByName || "");
+      setLastEditedAt(json.lastEditedAt || "");
       setStatus("Saved");
       window.setTimeout(() => {
         if (requestId === requestCounterRef.current) setStatus("");
@@ -66,6 +78,7 @@ export function JobBucketNoteEditor({ roNumber, initialNote }: { roNumber: strin
   return (
     <div className="w-[190px] min-w-[190px]">
       <textarea
+        title={formatMeta(lastEditedByName || null, lastEditedAt || null) || undefined}
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={2}
@@ -83,6 +96,7 @@ export function JobBucketNoteEditor({ roNumber, initialNote }: { roNumber: strin
         </button>
         {status ? <span className="text-[11px] text-slate-500">{status}</span> : <span className="text-[11px] text-transparent">Saved</span>}
       </div>
+      {lastEditedByName && lastEditedAt ? <div className="mt-1 text-[10px] text-slate-400">Hover note to see last edit</div> : null}
     </div>
   );
 }

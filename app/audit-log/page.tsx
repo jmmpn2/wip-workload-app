@@ -17,7 +17,7 @@ export default async function AuditLogPage() {
 
   const [shop, logs] = await Promise.all([
     prisma.shop.findUniqueOrThrow({ where: { id: shopId } }),
-    prisma.shopAuditLog.findMany({ where: { shopId }, orderBy: { createdAt: "desc" }, take: 250 }),
+    prisma.shopAuditLog.findMany({ where: { shopId }, include: { actorUser: true }, orderBy: { createdAt: "desc" }, take: 250 }),
   ]);
 
   return (
@@ -50,7 +50,7 @@ export default async function AuditLogPage() {
                 {logs.map((log) => (
                   <tr key={log.id} className="align-top">
                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDateTime(log.createdAt)}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{log.actorEmail || "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{log.actorName || log.actorUser?.name || log.actorEmail || "—"}</td>
                     <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900">{log.action}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">{log.entityType}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">{log.entityId || "—"}</td>

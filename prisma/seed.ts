@@ -44,8 +44,8 @@ async function main() {
   const superAdminHash = await hashPassword("changeme");
   await prisma.user.upsert({
     where: { email: "johnm@schaeferautobody.com" },
-    update: { role: "SUPER_ADMIN", shopId: null, isActive: true, mustChangePassword: true },
-    create: { email: "johnm@schaeferautobody.com", passwordHash: superAdminHash, role: "SUPER_ADMIN", shopId: null, isActive: true, mustChangePassword: true },
+    update: { name: "John McAlister", role: "SUPER_ADMIN", shopId: null, isActive: true, mustChangePassword: true },
+    create: { name: "John McAlister", email: "johnm@schaeferautobody.com", passwordHash: superAdminHash, role: "SUPER_ADMIN", shopId: null, isActive: true, mustChangePassword: true },
   });
 
   console.log("Seed complete");

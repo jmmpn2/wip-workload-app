@@ -3,6 +3,7 @@ export type AppUserRole = (typeof USER_ROLES)[number];
 
 export type SessionUser = {
   userId: string;
+  name: string;
   email: string;
   role: AppUserRole;
   shopId: string | null;
