@@ -47,6 +47,12 @@ export function canManageUsers(role: AppUserRole) {
 export function canAccessAllShops(role: AppUserRole) {
   return role === "SUPER_ADMIN" || role === "EXECUTIVE";
 }
+export function canManagePto(role: AppUserRole) {
+  return roleAtLeast(role, "SHOP_MANAGER");
+}
+export function canCreateShops(role: AppUserRole) {
+  return roleAtLeast(role, "EXECUTIVE");
+}
 export function allowedRoleOptions(actorRole: AppUserRole): AppUserRole[] {
   if (actorRole === "SUPER_ADMIN") return [...USER_ROLES];
   if (actorRole === "EXECUTIVE") return ["SHOP_MANAGER", "SERVICE_WRITER", "FDR"];

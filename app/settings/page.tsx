@@ -20,7 +20,7 @@ export default async function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold text-slate-900">Settings</h1>
-        <p className="mt-1 text-slate-600">Configure capacities, stage rules, thresholds, and highlighted insurers for this shop.</p>
+        <p className="mt-1 text-slate-600">Configure capacities, PTO status, stage rules, thresholds, and highlighted insurers for this shop.</p>
       </div>
 
       <ShopThresholdSettingsForm needsWorkThreshold={shop.needsWorkThreshold} overloadedThreshold={shop.overloadedThreshold} />

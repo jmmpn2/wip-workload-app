@@ -3,6 +3,9 @@ import { createSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 
+const SUPER_ADMIN_EMAIL = "johnm@schaeferautobody.com";
+const SUPER_ADMIN_NAME = "John McAlister";
+
 export async function POST(request: NextRequest) {
   const { email, password } = await request.json();
   const normalizedEmail = String(email || "").trim().toLowerCase();
@@ -20,6 +23,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
   }
 
+  let effectiveName = user.name || user.email;
+  if (user.email === SUPER_ADMIN_EMAIL && (!user.name || !user.name.trim())) {
+    await prisma.user.update({ where: { id: user.id }, data: { name: SUPER_ADMIN_NAME } });
+    effectiveName = SUPER_ADMIN_NAME;
+  }
+
   let currentShopId = user.shopId;
   if (!currentShopId && (user.role === "SUPER_ADMIN" || user.role === "EXECUTIVE")) {
     const firstShop = await prisma.shop.findFirst({ where: { isActive: true }, orderBy: { name: "asc" } });
@@ -30,7 +39,7 @@ export async function POST(request: NextRequest) {
 
   await createSession({
     userId: user.id,
-    name: user.name || user.email,
+    name: effectiveName,
     email: user.email,
     role: user.role,
     shopId: user.shopId,

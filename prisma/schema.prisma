@@ -88,6 +88,7 @@ model Technician {
   name      String
   capacity  Float    @default(0)
   isActive  Boolean  @default(true)
+  isOnPto   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)

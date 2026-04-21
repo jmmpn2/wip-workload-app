@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import crypto from "crypto";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { SessionUser, canAccessAllShops, canEditNotes, canEditSettings, canImportWip, canManageUsers, canMoveJobs, canViewAuditLog, canViewDashboard } from "@/lib/permissions";
+import { SessionUser, canAccessAllShops, canCreateShops, canEditNotes, canEditSettings, canImportWip, canManageUsers, canMoveJobs, canViewAuditLog, canViewDashboard } from "@/lib/permissions";
 
 const COOKIE_NAME = "wip_feeder_session";
 
@@ -61,7 +61,7 @@ export async function requireActiveShopId() {
   return shopId;
 }
 
-export async function requireRoleAccess(opts: { dashboard?: boolean; importWip?: boolean; moveJobs?: boolean; notes?: boolean; settings?: boolean; audit?: boolean; users?: boolean; }) {
+export async function requireRoleAccess(opts: { dashboard?: boolean; importWip?: boolean; moveJobs?: boolean; notes?: boolean; settings?: boolean; audit?: boolean; users?: boolean; shops?: boolean; }) {
   const session = await requireSession();
   if (session.mustChangePassword) redirect("/change-password");
   const role = session.role;
@@ -72,12 +72,13 @@ export async function requireRoleAccess(opts: { dashboard?: boolean; importWip?:
     (!opts.notes || canEditNotes(role)) &&
     (!opts.settings || canEditSettings(role)) &&
     (!opts.audit || canViewAuditLog(role)) &&
-    (!opts.users || canManageUsers(role));
+    (!opts.users || canManageUsers(role)) &&
+    (!opts.shops || canCreateShops(role));
   if (!allowed) redirect("/dashboard");
   return session;
 }
 
-export async function assertRoleAccessOrThrow(opts: { dashboard?: boolean; importWip?: boolean; moveJobs?: boolean; notes?: boolean; settings?: boolean; audit?: boolean; users?: boolean; }) {
+export async function assertRoleAccessOrThrow(opts: { dashboard?: boolean; importWip?: boolean; moveJobs?: boolean; notes?: boolean; settings?: boolean; audit?: boolean; users?: boolean; shops?: boolean; }) {
   const session = await requireSession();
   if (session.mustChangePassword) throw new Error("PASSWORD_CHANGE_REQUIRED");
   const role = session.role;
@@ -88,7 +89,8 @@ export async function assertRoleAccessOrThrow(opts: { dashboard?: boolean; impor
     (!opts.notes || canEditNotes(role)) &&
     (!opts.settings || canEditSettings(role)) &&
     (!opts.audit || canViewAuditLog(role)) &&
-    (!opts.users || canManageUsers(role));
+    (!opts.users || canManageUsers(role)) &&
+    (!opts.shops || canCreateShops(role));
   if (!allowed) throw new Error("FORBIDDEN");
   return session;
 }

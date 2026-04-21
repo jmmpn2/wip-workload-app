@@ -10,8 +10,8 @@ export async function POST(request: NextRequest) {
     if (!shopId) return NextResponse.json({ error: "No shop selected." }, { status: 400 });
     const body = await request.json();
     const technicians = Array.isArray(body.technicians) ? body.technicians : [];
-    await prisma.$transaction(technicians.map((tech: { id: string; name: string; capacity: number; isActive: boolean }) => prisma.technician.update({ where: { id: tech.id }, data: { name: tech.name.trim(), capacity: Number(tech.capacity || 0), isActive: !!tech.isActive } })));
-    await logShopAudit({ shopId, action: "UPDATE_CAPACITIES", entityType: "SETTINGS", summary: `Updated capacity settings for ${technicians.length} technician${technicians.length === 1 ? "" : "s"}.`, metadata: { technicianCount: technicians.length } });
+    await prisma.$transaction(technicians.map((tech: { id: string; name: string; capacity: number; isActive: boolean; isOnPto: boolean }) => prisma.technician.update({ where: { id: tech.id }, data: { name: tech.name.trim(), capacity: Number(tech.capacity || 0), isActive: !!tech.isActive, isOnPto: !!tech.isOnPto } })));
+    await logShopAudit({ shopId, action: "UPDATE_CAPACITIES", entityType: "SETTINGS", summary: `Updated technician settings for ${technicians.length} technician${technicians.length === 1 ? "" : "s"}.`, metadata: { technicianCount: technicians.length, ptoCount: technicians.filter((tech: { isOnPto: boolean }) => tech.isOnPto).length } });
     return NextResponse.json({ ok: true });
   } catch (error) {
     const auth = errorResponseFromAuthError(error);
