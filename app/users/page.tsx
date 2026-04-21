@@ -1,12 +1,9 @@
 import { UserManagementForm } from "@/components/UserManagementForm";
 import { getSession, requireRoleAccess } from "@/lib/auth";
+import { formatCentralDateTime } from "@/lib/datetime";
 import { allowedRoleOptions, canAccessAllShops } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
-function formatDateTime(value: Date | null) {
-  if (!value) return null;
-  return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" }).format(value);
-}
 
 export default async function UsersPage() {
   const session = await requireRoleAccess({ users: true });
@@ -21,7 +18,7 @@ export default async function UsersPage() {
         <p className="mt-1 text-slate-600">Create users, reset passwords, and activate or deactivate accounts.</p>
       </div>
       <UserManagementForm
-        users={users.map((user) => ({ id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.isActive, mustChangePassword: user.mustChangePassword, shopName: user.shop?.name || null, lastLoginAt: formatDateTime(user.lastLoginAt) }))}
+        users={users.map((user) => ({ id: user.id, name: user.name, email: user.email, role: user.role, isActive: user.isActive, mustChangePassword: user.mustChangePassword, shopName: user.shop?.name || null, lastLoginAt: formatCentralDateTime(user.lastLoginAt) }))}
         shops={shops}
         allowedRoles={allowedRoleOptions(session.role)}
         canManageAllShops={canAll}

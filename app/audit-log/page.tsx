@@ -1,15 +1,7 @@
 import { requireActiveShopId, requireRoleAccess } from "@/lib/auth";
+import { formatCentralDateTime } from "@/lib/datetime";
 import { prisma } from "@/lib/prisma";
 
-function formatDateTime(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(value);
-}
 
 export default async function AuditLogPage() {
   await requireRoleAccess({ audit: true });
@@ -49,7 +41,7 @@ export default async function AuditLogPage() {
               <tbody className="divide-y divide-slate-100 bg-white">
                 {logs.map((log) => (
                   <tr key={log.id} className="align-top">
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDateTime(log.createdAt)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatCentralDateTime(log.createdAt)}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">{log.actorName || log.actorUser?.name || log.actorEmail || "—"}</td>
                     <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900">{log.action}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">{log.entityType}</td>

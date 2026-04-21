@@ -1,10 +1,11 @@
 "use client";
 
+import { formatCentralDateTime } from "@/lib/datetime";
 import { useEffect, useRef, useState } from "react";
 
 function formatMeta(name: string | null, when: string | null) {
   if (!name || !when) return "";
-  const formatted = new Date(when).toLocaleString();
+  const formatted = formatCentralDateTime(when);
   return `Last edited by ${name} on ${formatted}`;
 }
 

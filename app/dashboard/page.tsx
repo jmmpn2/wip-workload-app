@@ -6,6 +6,7 @@ import { UploadCard } from "@/components/UploadCard";
 import { AssignableJobsTable } from "@/components/AssignableJobsTable";
 import { getDashboardData } from "@/lib/dashboard";
 import { getSession, requireActiveShopId, requireRoleAccess } from "@/lib/auth";
+import { formatCentralDateTime } from "@/lib/datetime";
 import { canEditNotes, canImportWip, canMoveJobs } from "@/lib/permissions";
 
 export default async function DashboardPage() {
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-3xl font-semibold text-slate-900">{data.shop.name}</h1>
           <p className="mt-1 text-sm text-slate-600">
-            {data.lastImport ? `Last import: ${new Date(data.lastImport.createdAt).toLocaleString()}` : "No WIP file uploaded yet."}
+            {data.lastImport ? `Last import: ${formatCentralDateTime(data.lastImport.createdAt)}` : "No WIP file uploaded yet."}
           </p>
         </div>
         <ExportButtons />
