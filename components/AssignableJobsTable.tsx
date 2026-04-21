@@ -40,6 +40,7 @@ function sortRows(rows: BucketRow[], sortKey: SortKey, direction: "asc" | "desc"
 }
 
 function HandoutTable({ title, description, rows, variant, canMoveJobs, canEditNotes }: { title: string; description: string; rows: BucketRow[]; variant: "assignable" | "tow_in" | "hold"; canMoveJobs: boolean; canEditNotes: boolean; }) {
+  const sectionId = variant === "tow_in" ? "tow-ins-needing-estimate" : variant === "hold" ? "cars-on-hold" : "cars-to-handout";
   const [sortKey, setSortKey] = useState<SortKey>("remainingHours");
   const [direction, setDirection] = useState<"asc" | "desc">("desc");
   function toggleSort(nextKey: SortKey) {
@@ -50,7 +51,7 @@ function HandoutTable({ title, description, rows, variant, canMoveJobs, canEditN
   const sortedRows = useMemo(() => sortRows(rows, sortKey, direction), [rows, sortKey, direction]);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div id={sectionId} className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
       <p className="mt-1 text-sm text-slate-600">{description}</p>
       <div className="mt-4 max-h-[520px] overflow-y-auto overflow-x-visible">

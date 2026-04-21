@@ -29,7 +29,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
-        <MetricsCards totals={data.totals} unassigned={data.unassigned} />
+        <MetricsCards totals={data.totals} unassigned={data.unassigned} towInEstimate={data.towInEstimate} />
         {canImportWip(role) ? <UploadCard /> : null}
       </div>
 

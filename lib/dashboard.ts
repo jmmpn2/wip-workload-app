@@ -17,7 +17,7 @@ export async function getDashboardData(shopId: string) {
       shop: { id: shopId, name: "Unknown Shop", needsWorkThreshold: 125, overloadedThreshold: 250 },
       rows: [], technicians: [], stageRules, lastImport: null, techRank: [],
       totals: { totalJobs: 0, totalHoursWip: 0, totalRemainingHours: 0 }, stages: [],
-      unassigned: { totalJobs: 0, totalHours: 0, remainingHours: 0 }, assignableRows: [], towInEstimateRows: [], handoutHoldRows: [], highlightedInsurers: [],
+      unassigned: { totalJobs: 0, totalHours: 0, remainingHours: 0 }, towInEstimate: { totalJobs: 0 }, assignableRows: [], towInEstimateRows: [], handoutHoldRows: [], highlightedInsurers: [],
     };
   }
 
@@ -95,7 +95,9 @@ export async function getDashboardData(shopId: string) {
   const stages = [...orderedStages, ...extraStages];
   const sortRows = (dataRows: any[]) => dataRows.sort((a, b) => b.remainingHours - a.remainingHours || b.roHours - a.roHours || a.roNumber.localeCompare(b.roNumber));
 
-  return { shop, rows: decoratedRows, technicians, stageRules, lastImport, techRank, totals: { totalJobs, totalHoursWip, totalRemainingHours }, stages, unassigned, assignableRows: sortRows(activeAssignableRows), towInEstimateRows: sortRows(towInEstimateRows), handoutHoldRows: sortRows(handoutHoldRows), highlightedInsurers };
+  const towInEstimate = { totalJobs: towInEstimateRows.length };
+
+  return { shop, rows: decoratedRows, technicians, stageRules, lastImport, techRank, totals: { totalJobs, totalHoursWip, totalRemainingHours }, stages, unassigned, towInEstimate, assignableRows: sortRows(activeAssignableRows), towInEstimateRows: sortRows(towInEstimateRows), handoutHoldRows: sortRows(handoutHoldRows), highlightedInsurers };
 }
 
 export async function getTechDetail(shopId: string, technicianName: string) {
