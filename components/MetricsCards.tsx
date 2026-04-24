@@ -12,12 +12,11 @@ export function MetricsCards({
     { label: "Total Hours WIP", value: totals.totalHoursWip },
     { label: "Remaining Hours WIP", value: totals.totalRemainingHours },
     { label: "Jobs to Handout", value: unassigned.totalJobs },
-    { label: "Hours to Handout", value: unassigned.totalHours },
     { label: "Number of Tow-Ins to Write", value: towInEstimate.totalJobs, href: "#tow-ins-needing-estimate" },
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       {cards.map((card) => {
         const content = (<>
           <p className="text-sm text-slate-500">{card.label}</p>
