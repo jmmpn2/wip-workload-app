@@ -6,6 +6,7 @@ type PdfTextItem = {
   x: number;
   y: number;
   width: number;
+  pageNumber: number;
 };
 
 type ColumnKey = "days" | "roNumber" | "customer" | "vehicle" | "tech" | "estimator" | "insurance" | "phase" | "hours";
@@ -76,7 +77,7 @@ async function extractTextItems(buffer: Buffer): Promise<PdfTextItem[]> {
       const transform = rawItem.transform || [1, 0, 0, 1, 0, 0];
       const x = Number(transform[4] || 0);
       const y = Number(viewport.height - (transform[5] || 0));
-      items.push({ text, x, y: y + (pageNumber - 1) * 1000, width: Number(rawItem.width || 0) });
+      items.push({ text, x, y: y + (pageNumber - 1) * 1000, width: Number(rawItem.width || 0), pageNumber });
     }
   }
 
@@ -93,6 +94,25 @@ function getColumnText(rowItems: PdfTextItem[], key: ColumnKey): string {
   return lineAwareJoin(getColumnItems(rowItems, column));
 }
 
+function cleanRepairPulseTechnicianName(value: string): string {
+  return normalizeTechnicianName(value)
+    // Repair Pulse repeats the table header on each page. If the PDF text extraction
+    // bleeds the next page header into the previous row, the Tech column can become
+    // "Chris Baldwin Tech" and create a fake technician. Strip that header artifact.
+    .replace(/\s+Tech\s*$/i, "")
+    .replace(/^Tech\s+/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isValidImportedRow(row: ParsedRow): boolean {
+  if (!/^39\d{5}$/.test(row.roNumber)) return false;
+  if (!row.stage || /^(phase|parts|hours|total|ver)$/i.test(row.stage)) return false;
+  if (!Number.isFinite(row.roHours)) return false;
+  if (/^(tech|est|bp|insurance)$/i.test(row.technician)) return false;
+  return true;
+}
+
 export async function parseRepairPulsePdf(buffer: Buffer): Promise<ParsedRow[]> {
   const items = await extractTextItems(buffer);
 
@@ -106,21 +126,24 @@ export async function parseRepairPulsePdf(buffer: Buffer): Promise<ParsedRow[]> 
     const anchor = roAnchors[index];
     const nextAnchor = roAnchors[index + 1];
     const rowTop = anchor.y - 2;
-    const rowBottom = nextAnchor ? nextAnchor.y - 2 : anchor.y + 45;
-    const rowItems = items.filter((item) => item.y >= rowTop && item.y < rowBottom);
+    const samePageNextAnchor = nextAnchor && nextAnchor.pageNumber === anchor.pageNumber ? nextAnchor : undefined;
+    const pageBottom = anchor.pageNumber * 1000;
+    const rowBottom = samePageNextAnchor ? samePageNextAnchor.y - 2 : Math.min(pageBottom, anchor.y + 55);
+    const rowItems = items.filter((item) => item.pageNumber === anchor.pageNumber && item.y >= rowTop && item.y < rowBottom);
 
     const roNumber = cleanText(anchor.text);
     const owner = cleanText(getColumnText(rowItems, "customer"));
     const vehicle = cleanText(getColumnText(rowItems, "vehicle"));
     const estimator = cleanText(getColumnText(rowItems, "estimator"));
-    const technician = normalizeTechnicianName(getColumnText(rowItems, "tech")) || UNASSIGNED_TECH_NAME;
+    const technician = cleanRepairPulseTechnicianName(getColumnText(rowItems, "tech")) || UNASSIGNED_TECH_NAME;
     const stage = normalizeStage(getColumnText(rowItems, "phase"));
     const insurance = cleanText(getColumnText(rowItems, "insurance"));
     const daysInShop = Math.round(parseNumber(getColumnText(rowItems, "days")));
     const roHours = parseNumber(getColumnText(rowItems, "hours"));
 
-    if (!roNumber || !stage || Number.isNaN(roHours)) continue;
-    rows.push({ roNumber, owner, vehicle, estimator, technician, stage, insurance, daysInShop, roHours });
+    const row = { roNumber, owner, vehicle, estimator, technician, stage, insurance, daysInShop, roHours };
+    if (!isValidImportedRow(row)) continue;
+    rows.push(row);
   }
 
   return rows;
