@@ -14,6 +14,32 @@ export type ParsedRow = {
   roHours: number;
 };
 
+function sanitizeImportedTechnicianName(value: string): string {
+  return normalizeTechnicianName(value)
+    .replace(/^Tech\s+/i, "")
+    .replace(/\s+Tech$/i, "")
+    .replace(/\b(Est|BP|Insurance|Phase|Hours|Sublet|Total|Ver)\b.*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isBadTechnicianName(value: string): boolean {
+  const normalized = normalizeTechnicianName(value);
+  if (!normalized) return true;
+  if (/^(tech|est|bp|insurance|phase|hours|sublet|total|ver)$/i.test(normalized)) return true;
+  if (/\s+Tech$/i.test(normalized)) return true;
+  if (/\b(Est|BP|Insurance|Phase|Hours|Sublet|Total|Ver)\b/i.test(normalized)) return true;
+  return false;
+}
+
+function isValidWipImportRow(row: ParsedRow): boolean {
+  if (!/^39\d{5}$/.test(row.roNumber)) return false;
+  if (!row.stage || /^(phase|parts|hours|total|ver)$/i.test(row.stage)) return false;
+  if (!Number.isFinite(row.roHours) || row.roHours < 0) return false;
+  if (isBadTechnicianName(row.technician) && normalizeTechnicianName(row.technician) !== UNASSIGNED_TECH_NAME) return false;
+  return true;
+}
+
 function detectHeaderRow(rows: any[][]): number {
   for (let i = 0; i < Math.min(rows.length, 12); i++) {
     const vals = rows[i].map((v) => cleanText(v).toLowerCase());
@@ -47,7 +73,7 @@ export function parseWorkbook(buffer: Buffer): ParsedRow[] {
     const vehicle = cleanText(row[vehicleIdx]);
     const estimatorFallbackJ = row[9];
     const estimator = cleanText(estimatorIdx >= 0 ? row[estimatorIdx] : estimatorFallbackJ);
-    const technicianRaw = normalizeTechnicianName(row[techIdx]);
+    const technicianRaw = sanitizeImportedTechnicianName(row[techIdx]);
     const technician = technicianRaw || UNASSIGNED_TECH_NAME;
     const stage = normalizeStage(row[phaseIdx]);
     const insurance = cleanText(insuranceIdx >= 0 ? row[insuranceIdx] : row[11]);
@@ -55,7 +81,7 @@ export function parseWorkbook(buffer: Buffer): ParsedRow[] {
     const daysInShop = Number.isFinite(daysValue) ? Math.round(daysValue) : 0;
     const roHours = Number(cleanText(row[hoursIdx]));
     return { roNumber, owner, vehicle, estimator, technician, stage, insurance, daysInShop, roHours };
-  }).filter((row) => row.roNumber && row.stage && !Number.isNaN(row.roHours));
+  }).filter(isValidWipImportRow);
 }
 
 export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedRow[], sourceFileName: string) {
@@ -73,8 +99,11 @@ export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedR
   const towInEstimateMap = new Map(towInEstimateTags.map((tag) => [tag.roNumber, tag]));
   const noteMap = new Map(jobNotes.map((note) => [note.roNumber, note]));
   const techNames = new Set(techs.map((tech) => normalizeTechnicianName(tech.name)));
+  const cleanRows = rows
+    .map((row) => ({ ...row, technician: sanitizeImportedTechnicianName(row.technician) || UNASSIGNED_TECH_NAME }))
+    .filter(isValidWipImportRow);
 
-  const prepared = rows.map((row) => {
+  const prepared = cleanRows.map((row) => {
     const rule = ruleMap.get(row.stage);
     const hold = holdMap.get(row.roNumber);
     const handoutHold = row.technician === UNASSIGNED_TECH_NAME ? handoutHoldMap.get(row.roNumber) : undefined;
@@ -115,6 +144,11 @@ export async function recalcAndReplaceShopSnapshot(shopId: string, rows: ParsedR
   );
 
   await prisma.$transaction(async (tx) => {
+    // Safety cleanup: old bad PDF parses could leave fake technicians like "Chris Baldwin Tech".
+    // Remove those automatically before every new import so junk records never keep showing on the dashboard.
+    await tx.currentWipRow.deleteMany({ where: { shopId, technician: { endsWith: " Tech" } } });
+    await tx.technician.deleteMany({ where: { shopId, name: { endsWith: " Tech" } } });
+
     await tx.currentWipRow.deleteMany({ where: { shopId } });
     if (prepared.length > 0) await tx.currentWipRow.createMany({ data: prepared });
     await tx.importRun.create({ data: { shopId, sourceFileName, rowCount: prepared.length } });

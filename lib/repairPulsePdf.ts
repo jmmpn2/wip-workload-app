@@ -99,17 +99,27 @@ function cleanRepairPulseTechnicianName(value: string): string {
     // Repair Pulse repeats the table header on each page. If the PDF text extraction
     // bleeds the next page header into the previous row, the Tech column can become
     // "Chris Baldwin Tech" and create a fake technician. Strip that header artifact.
-    .replace(/\s+Tech\s*$/i, "")
     .replace(/^Tech\s+/i, "")
+    .replace(/\s+Tech\s*$/i, "")
+    .replace(/\b(Est|BP|Insurance|Phase|Hours|Sublet|Total|Ver)\b.*$/i, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function isBadTechnicianName(value: string): boolean {
+  const normalized = normalizeTechnicianName(value);
+  if (!normalized) return true;
+  if (/^(tech|est|bp|insurance|phase|hours|sublet|total|ver)$/i.test(normalized)) return true;
+  if (/\s+Tech$/i.test(normalized)) return true;
+  if (/\b(Est|BP|Insurance|Phase|Hours|Sublet|Total|Ver)\b/i.test(normalized)) return true;
+  return false;
 }
 
 function isValidImportedRow(row: ParsedRow): boolean {
   if (!/^39\d{5}$/.test(row.roNumber)) return false;
   if (!row.stage || /^(phase|parts|hours|total|ver)$/i.test(row.stage)) return false;
-  if (!Number.isFinite(row.roHours)) return false;
-  if (/^(tech|est|bp|insurance)$/i.test(row.technician)) return false;
+  if (!Number.isFinite(row.roHours) || row.roHours < 0) return false;
+  if (normalizeTechnicianName(row.technician) !== UNASSIGNED_TECH_NAME && isBadTechnicianName(row.technician)) return false;
   return true;
 }
 

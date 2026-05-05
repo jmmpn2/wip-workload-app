@@ -110,3 +110,8 @@ npx prisma db push
 ## Repair Pulse PDF import
 
 The WIP upload now accepts either the existing Excel file or a direct Repair Pulse Production List PDF export. PDF files are parsed server-side into the same WIP row structure used by the Excel importer, then imported normally. No database change is required for this feature.
+
+
+### Repair Pulse PDF import hardening
+
+The import flow accepts Repair Pulse PDF exports and validates parsed rows before saving them. It rejects repeated header bleed-through, invalid technician names such as names ending in ` Tech`, invalid/missing RO numbers, invalid phases, and invalid hours. Each import also auto-cleans old phantom technician/WIP records ending in ` Tech` for the selected shop.
