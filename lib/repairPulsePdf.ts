@@ -55,8 +55,6 @@ function lineAwareJoin(items: PdfTextItem[]): string {
 
 async function extractTextItems(buffer: Buffer): Promise<PdfTextItem[]> {
   const pdfjs: any = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  if (pdfjs.GlobalWorkerOptions) pdfjs.GlobalWorkerOptions.workerSrc = undefined;
-
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(buffer),
     disableFontFace: true,
