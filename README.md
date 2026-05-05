@@ -105,3 +105,8 @@ After pulling this update, run Prisma against the database before starting the a
 npx prisma generate
 npx prisma db push
 ```
+
+
+## Repair Pulse PDF import
+
+The WIP upload now accepts either the existing Excel file or a direct Repair Pulse Production List PDF export. PDF files are parsed server-side into the same WIP row structure used by the Excel importer, then imported normally. No database change is required for this feature.

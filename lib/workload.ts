@@ -2,7 +2,7 @@ import * as XLSX from "xlsx";
 import { prisma } from "@/lib/prisma";
 import { cleanText, normalizeStage, normalizeTechnicianName, UNASSIGNED_TECH_NAME } from "@/lib/stages";
 
-type ParsedRow = {
+export type ParsedRow = {
   roNumber: string;
   owner: string;
   vehicle: string;
